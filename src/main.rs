@@ -22,7 +22,7 @@ struct Output {
     pcrs: Vec<PCR>,
 }
 
-fn compute_pcr4() {
+fn compute_pcr4() -> PCR {
     let ev_efi_action_hash: Vec<u8> = Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();
     let ev_separator_hash: Vec<u8> = Sha256::digest(hex::decode("00000000").unwrap()).to_vec();
 
@@ -73,10 +73,12 @@ fn compute_pcr4() {
         }).collect(),
     };
 
-    println!("{}", serde_json::to_string_pretty(&pcr4).unwrap());
+    // println!("{}", serde_json::to_string_pretty(&pcr4).unwrap());
+
+    pcr4
 }
 
-fn compute_pcr11() {
+fn compute_pcr11() -> PCR {
     let sections: Vec<&str> = vec![
         ".linux",
         ".osrel",
@@ -128,14 +130,21 @@ fn compute_pcr11() {
         }).collect(),
     };
 
-    println!("{}", serde_json::to_string_pretty(&pcr11).unwrap());
+    // println!("{}", serde_json::to_string_pretty(&pcr11).unwrap());
+
+    pcr11
 }
 
 fn main() -> Result<()> {
-
-    // compute_pcr4();
-
-    compute_pcr11();
+    
+    let mut pcrs = vec![];
+    pcrs.push(compute_pcr4());
+    pcrs.push(compute_pcr11());
+    println!("{}", serde_json::to_string_pretty(
+        &Output{
+            pcrs
+        }
+    ).unwrap());
 
     Ok(())
 }
