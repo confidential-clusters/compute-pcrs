@@ -177,6 +177,8 @@ dependencies = [
  "hex",
  "hex-literal",
  "lief",
+ "serde",
+ "serde_json",
  "sha2",
 ]
 
