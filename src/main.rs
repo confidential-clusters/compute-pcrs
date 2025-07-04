@@ -1,8 +1,12 @@
+use crate::uefi::UEFIVariableData;
 use anyhow::{Ok, Result};
 use hex_literal::hex;
 use lief::generic::Section;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use uuid::uuid;
+
+pub mod uefi;
 
 #[derive(Serialize, Deserialize)]
 struct Part {
@@ -133,8 +137,51 @@ fn compute_pcr11() -> PCR {
     pcr11
 }
 
+/// PCR 7 contains the digests of the variables defining the Secure Boot
+/// state.
+fn compute_pcr7() -> PCR {
+    let mut hashes: Vec<(String, Vec<u8>)> = vec![];
+    let sb_state = UEFIVariableData::new(
+        uuid!("8be4df61-93ca-11d2-aa0d-00e098032b8c"),
+        String::from("SecureBoot"),
+        vec![1],
+    );
+
+    hashes.push((
+        String::from("EV_EFI_VARIABLE_DRIVER_CONFIG"),
+        sb_state.hash(),
+    ));
+
+    let mut result =
+        hex::decode("0000000000000000000000000000000000000000000000000000000000000000")
+            .unwrap()
+            .to_vec();
+
+    for (_s, h) in &hashes {
+        let mut hasher = Sha256::new();
+        hasher.update(result);
+        hasher.update(h);
+        result = hasher.finalize().to_vec();
+    }
+
+    //
+    // TODO@bgartzia: add the rest
+    let pcr7 = PCR {
+        id: 7,
+        value: hex::encode(sb_state.hash()),
+        parts: hashes
+            .iter()
+            .map(|(s, h)| Part {
+                name: s.into(),
+                hash: hex::encode(h),
+            })
+            .collect(),
+    };
+    pcr7
+}
+
 fn main() -> Result<()> {
-    let pcrs = vec![compute_pcr4(), compute_pcr11()];
+    let pcrs = vec![compute_pcr4(), compute_pcr7(), compute_pcr11()];
     println!(
         "{}",
         serde_json::to_string_pretty(&Output { pcrs }).unwrap()
