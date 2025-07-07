@@ -3,6 +3,7 @@ FROM quay.io/fedora/fedora:latest
 RUN dnf install -y \
         cargo \
         gcc \
+        gcc-c++ \
         git \
         jq \
         just \
