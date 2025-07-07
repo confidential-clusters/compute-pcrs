@@ -27,7 +27,7 @@ fn compute_pcr4() -> PCR {
         Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();
     let ev_separator_hash: Vec<u8> = Sha256::digest(hex::decode("00000000").unwrap()).to_vec();
 
-    let bins = vec![
+    let bins = [
         "shim.efi",
         "grubx64.efi",
         "a9ea995b29cda6783b676e2ec2666d8813882b604625389428ece4eee074e742.efi",
@@ -40,7 +40,7 @@ fn compute_pcr4() -> PCR {
     let mut bin_hashes: Vec<(String, Vec<u8>)> = bins
         .iter()
         .map(|b| {
-            let pe: lief::pe::Binary = lief::pe::Binary::parse(&format!("./test/{}", b)).unwrap();
+            let pe: lief::pe::Binary = lief::pe::Binary::parse(&format!("./test/{b}")).unwrap();
             ((*b).into(), pe.authentihash(lief::pe::Algorithms::SHA_256))
         })
         .collect();
@@ -93,11 +93,11 @@ fn compute_pcr11() -> PCR {
     let sections: Vec<&str> = vec![".linux", ".osrel", ".cmdline", ".initrd", ".uname", ".sbat"];
 
     let uki = "a9ea995b29cda6783b676e2ec2666d8813882b604625389428ece4eee074e742.efi";
-    let pe: lief::pe::Binary = lief::pe::Binary::parse(&format!("./test/{}", uki)).unwrap();
+    let pe: lief::pe::Binary = lief::pe::Binary::parse(&format!("./test/{uki}")).unwrap();
     let mut hashes: Vec<(String, Vec<u8>)> = vec![];
     sections.iter().for_each(|s| {
         let section = pe.section_by_name(s).unwrap();
-        hashes.push(((*s).into(), Sha256::digest(format!("{}\0", s)).to_vec()));
+        hashes.push(((*s).into(), Sha256::digest(format!("{s}\0")).to_vec()));
         hashes.push(((*s).into(), Sha256::digest(section.content()).to_vec()));
     });
 
@@ -134,9 +134,7 @@ fn compute_pcr11() -> PCR {
 }
 
 fn main() -> Result<()> {
-    let mut pcrs = vec![];
-    pcrs.push(compute_pcr4());
-    pcrs.push(compute_pcr11());
+    let pcrs = vec![compute_pcr4(), compute_pcr11()];
     println!(
         "{}",
         serde_json::to_string_pretty(&Output { pcrs }).unwrap()
