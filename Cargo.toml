@@ -2,6 +2,7 @@
 name = "compute-pcrs"
 version = "0.1.0"
 edition = "2024"
+repository = "https://github.com/confidential-clusters/compute-pcrs"
 rust-version = "1.85.0"
 
 [dependencies]
