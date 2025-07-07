@@ -1,0 +1,11 @@
+FROM quay.io/fedora/fedora:latest
+
+RUN dnf install -y \
+        cargo \
+        gcc \
+        git \
+        jq \
+        just \
+        openssl-devel \
+    && \
+    dnf clean all
