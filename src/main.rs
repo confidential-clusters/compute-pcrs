@@ -1,3 +1,4 @@
+use crate::shim::{Shim, get_sbat_var_original_uefivar};
 use crate::uefi::efivars::{
     EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets,
 };
@@ -7,6 +8,7 @@ use lief::generic::Section;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+pub mod shim;
 pub mod uefi;
 
 #[derive(Serialize, Deserialize)]
@@ -147,7 +149,7 @@ fn compute_pcr11() -> Pcr {
 ///    - EV_EFI_VARIABLE_DRIVER_CONFIG: dbx
 ///    - EV_SEPARATOR
 ///    - EV_EFI_VARIABLE_AUTHORITY: db (TODO)
-///    - EV_EFI_VARIABLE_AUTHORITY: SbatLevel (TODO)
+///    - EV_EFI_VARIABLE_AUTHORITY: SbatLevel
 ///    - EV_EFI_VARIABLE_AUTHORITY: MokListRT (TODO)
 ///
 /// EFI vars are needed to compute pcr7.
@@ -168,6 +170,17 @@ fn compute_pcr7() -> Pcr {
         "EV_SEPARATOR".into(),
         Sha256::digest(hex::decode("00000000").unwrap()).to_vec(),
     ));
+
+    // TODO: parametrize path
+    let shim_bin = Shim::load_from_file("./test/shimx64.efi");
+    let sbatlevel = shim_bin.get_sbatlevel_uefivar();
+    match sbatlevel {
+        None => hashes.push((
+            "EV_EFI_VARIABLE_AUTHORITY".into(),
+            get_sbat_var_original_uefivar().hash(),
+        )),
+        Some(level) => hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), level.hash())),
+    }
 
     let mut result =
         hex::decode("0000000000000000000000000000000000000000000000000000000000000000")
