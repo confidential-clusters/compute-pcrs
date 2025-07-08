@@ -1,5 +1,13 @@
 use sha2::{Digest, Sha256};
+use std::fs;
+use std::path::Path;
 use uuid::{Uuid, uuid};
+
+pub mod efivars;
+
+pub const GUID_GLOBAL_VARIABLE: Uuid = uuid!("8be4df61-93ca-11d2-aa0d-00e098032b8c");
+pub const GUID_SECURITY_DATABASE: Uuid = uuid!("d719b2cb-3d3a-4596-a3bc-dad00e67656f");
+pub const GUID_SHIM_LOCK: Uuid = uuid!("605dab50-e046-4300-abb6-3dd810dd8b23");
 
 // Generates the little endian representation of a GUID variable
 // name.
@@ -11,6 +19,19 @@ fn guid_to_le_bytes(guid: &Uuid) -> Vec<u8> {
     guid_bytes_le[6..8].reverse();
     // Bytes from 8 on are not reversed
     guid_bytes_le
+}
+
+/// Load data from a UEFI variable given:
+///     - path to the directory holding the file
+///     - var, UEFI variable name
+///     - guid
+///     - attribute header length
+fn load_uefi_var_data(path: &Path, var: &str, guid: &Uuid, attribute_header: usize) -> Vec<u8> {
+    let mut data = fs::read(path.join(format!("{var}-{guid}"))).unwrap();
+    if attribute_header > 0 {
+        return data.split_off(attribute_header);
+    }
+    data
 }
 
 // Struct representing UEFIVariable data and the events it could measure in
@@ -28,7 +49,7 @@ impl UEFIVariableData {
     //    - A UEFI GUID variable name Uuid (32 digit hexadecimal string).
     //    - The unicode variable name String.
     //    - Buffer containing the variable data.
-    pub fn new(variable_name: Uuid, unicode_name: String, data: Vec<u8>) -> UEFIVariableData {
+    pub fn new(variable_name: Uuid, unicode_name: &str, data: Vec<u8>) -> UEFIVariableData {
         UEFIVariableData {
             variable_name,
             unicode_name_len: unicode_name.len() as u64,
@@ -36,6 +57,11 @@ impl UEFIVariableData {
             unicode_name: unicode_name.encode_utf16().collect(),
             variable_data: data,
         }
+    }
+
+    pub fn load(path: &Path, var: &str, guid: Uuid, attribute_header: usize) -> UEFIVariableData {
+        let data = load_uefi_var_data(path, var, &guid, attribute_header);
+        UEFIVariableData::new(guid, var, data)
     }
 
     // Encode the UEFIVariableData struct into a u8 vec/buffer that can be
@@ -76,7 +102,7 @@ mod tests {
     fn correct_hash() {
         let uefivar = UEFIVariableData::new(
             uuid!("8be4df61-93ca-11d2-aa0d-00e098032b8c"),
-            String::from("SecureBoot"),
+            "SecureBoot",
             vec![1],
         );
         assert_eq!(

@@ -1,10 +1,11 @@
-use crate::uefi::UEFIVariableData;
+use crate::uefi::efivars::{
+    EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets,
+};
 use anyhow::{Ok, Result};
 use hex_literal::hex;
 use lief::generic::Section;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use uuid::uuid;
 
 pub mod uefi;
 
@@ -138,18 +139,34 @@ fn compute_pcr11() -> PCR {
 }
 
 /// PCR 7 contains the digests of the variables defining the Secure Boot
-/// state.
-fn compute_pcr7() -> PCR {
-    let mut hashes: Vec<(String, Vec<u8>)> = vec![];
-    let sb_state = UEFIVariableData::new(
-        uuid!("8be4df61-93ca-11d2-aa0d-00e098032b8c"),
-        String::from("SecureBoot"),
-        vec![1],
+/// state. It's extended by the following events:
+///    - EV_EFI_VARIABLE_DRIVER_CONFIG: SecureBoot
+///    - EV_EFI_VARIABLE_DRIVER_CONFIG: PK
+///    - EV_EFI_VARIABLE_DRIVER_CONFIG: KEK
+///    - EV_EFI_VARIABLE_DRIVER_CONFIG: db
+///    - EV_EFI_VARIABLE_DRIVER_CONFIG: dbx
+///    - EV_SEPARATOR
+///    - EV_EFI_VARIABLE_AUTHORITY: db (TODO)
+///    - EV_EFI_VARIABLE_AUTHORITY: SbatLevel (TODO)
+///    - EV_EFI_VARIABLE_AUTHORITY: MokListRT (TODO)
+///
+/// EFI vars are needed to compute pcr7.
+/// EFI vars can be loaded from
+///     - efivars
+///
+fn compute_pcr7() -> Pcr {
+    let sb_var_loader = EFIVarsLoader::new(
+        "test/efivars/qemu-ovmf/fcos-42",
+        SECURE_BOOT_ATTR_HEADER_LENGTH,
+        get_secure_boot_targets(),
     );
+    let mut hashes: Vec<(String, Vec<u8>)> = sb_var_loader
+        .map(|var| ("EV_EFI_VARIABLE_DRIVER_CONFIG".into(), var.hash()))
+        .collect();
 
     hashes.push((
-        String::from("EV_EFI_VARIABLE_DRIVER_CONFIG"),
-        sb_state.hash(),
+        "EV_SEPARATOR".into(),
+        Sha256::digest(hex::decode("00000000").unwrap()).to_vec(),
     ));
 
     let mut result =
@@ -164,11 +181,9 @@ fn compute_pcr7() -> PCR {
         result = hasher.finalize().to_vec();
     }
 
-    //
-    // TODO@bgartzia: add the rest
     let pcr7 = PCR {
         id: 7,
-        value: hex::encode(sb_state.hash()),
+        value: hex::encode(result),
         parts: hashes
             .iter()
             .map(|(s, h)| Part {
