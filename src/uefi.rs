@@ -91,6 +91,10 @@ impl UEFIVariableData {
     pub fn hash(&self) -> Vec<u8> {
         Sha256::digest(self.encode()).to_vec()
     }
+
+    pub fn data(&self) -> &[u8] {
+        &self.variable_data
+    }
 }
 
 #[cfg(test)]
