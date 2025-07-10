@@ -1,5 +1,5 @@
 use super::{GUID_GLOBAL_VARIABLE, GUID_SECURITY_DATABASE, UEFIVariableData};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 const EFI_VAR_ID_SECUREBOOT: (&str, Uuid) = ("SecureBoot", GUID_GLOBAL_VARIABLE);
@@ -23,6 +23,11 @@ pub struct EFIVarsLoader {
     attribute_header: usize,
     index: usize,
     targets: Vec<(String, Uuid)>,
+}
+
+pub fn load_db(path: &str) -> UEFIVariableData {
+    let (var, guid) = EFI_VAR_ID_DB;
+    UEFIVariableData::load(Path::new(path), var, guid, SECURE_BOOT_ATTR_HEADER_LENGTH)
 }
 
 impl EFIVarsLoader {
