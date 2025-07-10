@@ -1,6 +1,6 @@
 use crate::shim::{Shim, get_sbat_var_original_uefivar};
 use crate::uefi::efivars::{
-    EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets,
+    EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets, load_db,
 };
 use anyhow::{Ok, Result};
 use hex_literal::hex;
@@ -148,7 +148,7 @@ fn compute_pcr11() -> Pcr {
 ///    - EV_EFI_VARIABLE_DRIVER_CONFIG: db
 ///    - EV_EFI_VARIABLE_DRIVER_CONFIG: dbx
 ///    - EV_SEPARATOR
-///    - EV_EFI_VARIABLE_AUTHORITY: db (TODO)
+///    - EV_EFI_VARIABLE_AUTHORITY: db
 ///    - EV_EFI_VARIABLE_AUTHORITY: SbatLevel
 ///    - EV_EFI_VARIABLE_AUTHORITY: MokListRT (TODO)
 ///
@@ -172,7 +172,17 @@ fn compute_pcr7() -> Pcr {
     ));
 
     // TODO: parametrize path
+    let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
     let shim_bin = Shim::load_from_file("./test/shimx64.efi");
+    let shim_cert = uefi::find_shim_cert_in_db(sb_db.data(), &shim_bin);
+    match shim_cert {
+        Some(cert) => hashes.push((
+            "EV_EFI_VARIABLE_AUTHORITY".into(),
+            uefi::UEFIVariableData::new(uefi::GUID_SECURITY_DATABASE, "db", cert).hash(),
+        )),
+        None => panic!("Can't find shim signature certificate in secure boot db"),
+    }
+
     let sbatlevel = shim_bin.get_sbatlevel_uefivar();
     match sbatlevel {
         None => hashes.push((
