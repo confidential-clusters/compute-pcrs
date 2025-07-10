@@ -27,6 +27,10 @@ impl Shim {
         }
         None
     }
+
+    pub fn signatures(&self) -> lief::pe::signature::Signatures {
+        self.image.signatures()
+    }
 }
 
 pub fn get_sbat_var_original_uefivar() -> UEFIVariableData {
