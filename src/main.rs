@@ -1,4 +1,4 @@
-use crate::shim::{Shim, get_sbat_var_original_uefivar};
+use crate::shim::{SbatLevelPolicyType, Shim, get_sbat_var_original_uefivar};
 use crate::uefi::efivars::{
     EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets, load_db,
 };
@@ -183,7 +183,7 @@ fn compute_pcr7() -> Pcr {
         None => panic!("Can't find shim signature certificate in secure boot db"),
     }
 
-    let sbatlevel = shim_bin.get_sbatlevel_uefivar();
+    let sbatlevel = shim_bin.get_sbatlevel_uefivar(&SbatLevelPolicyType::PREVIOUS);
     match sbatlevel {
         None => hashes.push((
             "EV_EFI_VARIABLE_AUTHORITY".into(),
