@@ -8,6 +8,17 @@ pub struct X509Cert {
     pub raw: Vec<u8>,
 }
 
+impl X509Cert {
+    pub fn from_der(data: &[u8]) -> Result<X509Cert, openssl::error::ErrorStack> {
+        let cert = openssl::x509::X509::from_der(data)?;
+        Ok(X509Cert {
+            issuer: cert_issuer(&cert),
+            subject: cert_subject(&cert),
+            raw: data.to_vec(),
+        })
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct CertDbParsingError {
     string: String,
