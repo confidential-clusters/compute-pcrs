@@ -44,7 +44,10 @@ fn entry_to_string(entry: &openssl::x509::X509NameEntryRef) -> Option<String> {
     // TODO improve the way both object is formatted to str
     let object = format!("{:?}", entry.object());
     let data = entry.data().as_utf8().unwrap();
-    let data_str = std::str::from_utf8(data.as_bytes()).unwrap();
+    // commas inside the entry strings in lief are preceeded by an escape char
+    let data_str = std::str::from_utf8(data.as_bytes())
+        .unwrap()
+        .replace(",", "\\,");
     if object == "countryName" {
         return Some(format!("C={}", data_str));
     } else if object == "stateOrProvinceName" {
@@ -55,6 +58,8 @@ fn entry_to_string(entry: &openssl::x509::X509NameEntryRef) -> Option<String> {
         return Some(format!("O={}", data_str));
     } else if object == "commonName" {
         return Some(format!("CN={}", data_str));
+    } else if object == "organizationalUnitName" {
+        return Some(format!("OU={}", data_str));
     }
     None
 }
