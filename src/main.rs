@@ -181,7 +181,7 @@ fn compute_pcr7() -> Pcr {
     if secureboot_enabled {
         // TODO: parametrize path
         let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
-        let sb_db_certs = crate::certs::get_db_certs(sb_db.data());
+        let sb_db_certs = crate::certs::get_db_certs(sb_db.data()).unwrap();
         let shim_cert = shim_bin.find_cert_in_db(&sb_db_certs);
         match shim_cert {
             Some(cert) => hashes.push((

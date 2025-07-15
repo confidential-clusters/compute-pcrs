@@ -1,9 +1,30 @@
 use crate::uefi::{EFI_CERT_TYPE_X509_GUID, guid_to_le_bytes};
+use std::fmt;
 
+#[derive(Debug)]
 pub struct X509Cert {
     pub issuer: String,
     pub subject: String,
     pub raw: Vec<u8>,
+}
+
+#[derive(Clone, Debug)]
+pub struct CertDbParsingError {
+    string: String,
+}
+
+impl CertDbParsingError {
+    pub fn new(string: &str) -> CertDbParsingError {
+        CertDbParsingError {
+            string: string.into(),
+        }
+    }
+}
+
+impl fmt::Display for CertDbParsingError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Error parsing cert db: {}", self.string)
+    }
 }
 
 /// Tries formatting openssl name entries into the entry format that lief
@@ -51,7 +72,9 @@ fn cert_issuer(cert: &openssl::x509::X509) -> String {
 
 /// Finds the certificates that UEFI db contains given its raw representation
 /// Returns X509 structures and their raw representation
-fn get_db_certs_raw(data: &[u8]) -> Vec<(openssl::x509::X509, Vec<u8>)> {
+fn get_db_certs_raw(
+    data: &[u8],
+) -> Result<Vec<(openssl::x509::X509, Vec<u8>)>, CertDbParsingError> {
     let mut certs = Vec::new();
     let mut offset = 0;
 
@@ -74,7 +97,7 @@ fn get_db_certs_raw(data: &[u8]) -> Vec<(openssl::x509::X509, Vec<u8>)> {
         ) as usize;
 
         if offset + list_size > data.len() {
-            panic!("Invalid list size");
+            return Err(CertDbParsingError::new("Invalid list size"));
         }
 
         offset += 28 + head_size;
@@ -92,18 +115,18 @@ fn get_db_certs_raw(data: &[u8]) -> Vec<(openssl::x509::X509, Vec<u8>)> {
         offset += list_size - (28 + head_size)
     }
 
-    certs
+    Ok(certs)
 }
 
 // Given the raw representation of a certificate db, it returns a vector
 // containing X509Cert representations of its contents
-pub fn get_db_certs(data: &[u8]) -> Vec<X509Cert> {
-    get_db_certs_raw(data)
+pub fn get_db_certs(data: &[u8]) -> Result<Vec<X509Cert>, CertDbParsingError> {
+    Ok(get_db_certs_raw(data)?
         .iter()
         .map(|(c, r)| X509Cert {
             subject: cert_subject(c),
             issuer: cert_issuer(c),
             raw: r.clone(),
         })
-        .collect()
+        .collect())
 }

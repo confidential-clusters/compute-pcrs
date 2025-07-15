@@ -55,20 +55,25 @@ impl Shim {
         long_name
     }
 
+    fn section(&self, name: &str) -> Option<Vec<u8>> {
+        for section in self.image.sections() {
+            if self.long_section_name(section.name()) == name {
+                return Some(section.content().to_vec());
+            }
+        }
+        None
+    }
+
     pub fn get_sbatlevel_uefivar(
         &self,
         sbatlevel_policy: &SbatLevelPolicyType,
     ) -> Option<UEFIVariableData> {
-        for section in self.image.sections() {
-            if self.long_section_name(section.name()) == *SHIM_SBATLEVEL_SECTION {
-                return Some(UEFIVariableData::new(
-                    GUID_SHIM_LOCK,
-                    "SbatLevel",
-                    get_sbatlevel_section(section.content(), sbatlevel_policy),
-                ));
-            }
-        }
-        None
+        let sbatlevel_raw = self.section(SHIM_SBATLEVEL_SECTION)?;
+        Some(UEFIVariableData::new(
+            GUID_SHIM_LOCK,
+            "SbatLevel",
+            get_sbatlevel_section(&sbatlevel_raw, sbatlevel_policy),
+        ))
     }
 
     pub fn signatures(&self) -> lief::pe::signature::Signatures {
