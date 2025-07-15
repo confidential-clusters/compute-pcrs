@@ -74,6 +74,21 @@ impl Shim {
     pub fn signatures(&self) -> lief::pe::signature::Signatures {
         self.image.signatures()
     }
+
+    pub fn find_cert_in_db(&self, db: &Vec<crate::certs::X509Cert>) -> Option<Vec<u8>> {
+        for signature in self.signatures() {
+            for certificate in signature.certificates() {
+                let shim_cert_subject = certificate.subject();
+                let shim_cert_issuer = certificate.issuer();
+                for cert in db {
+                    if cert.subject == shim_cert_subject || cert.subject == shim_cert_issuer {
+                        return Some(cert.raw.clone());
+                    }
+                }
+            }
+        }
+        None
+    }
 }
 
 pub fn get_sbat_var_original_uefivar() -> UEFIVariableData {
