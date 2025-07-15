@@ -2,19 +2,13 @@ use super::{GUID_GLOBAL_VARIABLE, GUID_SECURITY_DATABASE, UEFIVariableData};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-const EFI_VAR_ID_SECUREBOOT: (&str, Uuid) = ("SecureBoot", GUID_GLOBAL_VARIABLE);
 const EFI_VAR_ID_PK: (&str, Uuid) = ("PK", GUID_GLOBAL_VARIABLE);
 const EFI_VAR_ID_KEK: (&str, Uuid) = ("KEK", GUID_GLOBAL_VARIABLE);
 const EFI_VAR_ID_DB: (&str, Uuid) = ("db", GUID_SECURITY_DATABASE);
 const EFI_VAR_ID_DBX: (&str, Uuid) = ("dbx", GUID_SECURITY_DATABASE);
 
-const SECURE_BOOT_VARIABLES: [(&str, Uuid); 5] = [
-    EFI_VAR_ID_SECUREBOOT,
-    EFI_VAR_ID_PK,
-    EFI_VAR_ID_KEK,
-    EFI_VAR_ID_DB,
-    EFI_VAR_ID_DBX,
-];
+const SECURE_BOOT_VARIABLES: [(&str, Uuid); 4] =
+    [EFI_VAR_ID_PK, EFI_VAR_ID_KEK, EFI_VAR_ID_DB, EFI_VAR_ID_DBX];
 
 pub const SECURE_BOOT_ATTR_HEADER_LENGTH: usize = 4;
 

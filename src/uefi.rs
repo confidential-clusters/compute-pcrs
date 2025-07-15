@@ -135,6 +135,17 @@ pub fn find_shim_cert_in_db(sb_db: &[u8], shim: &crate::shim::Shim) -> Option<Ve
     None
 }
 
+pub fn get_secureboot_state_event(enabled: bool) -> UEFIVariableData {
+    UEFIVariableData::new(
+        GUID_GLOBAL_VARIABLE,
+        "SecureBoot",
+        match enabled {
+            true => vec![enabled as u8],
+            false => vec![],
+        },
+    )
+}
+
 // Struct representing UEFIVariable data and the events it could measure in
 // the TPM
 pub struct UEFIVariableData {

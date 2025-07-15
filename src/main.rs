@@ -157,14 +157,18 @@ fn compute_pcr11() -> Pcr {
 ///     - efivars
 ///
 fn compute_pcr7() -> Pcr {
+    // TODO: parametrize secureboot_enabled boolean
+    let secureboot_enabled: bool = true;
+    let mut hashes: Vec<(String, Vec<u8>)> = vec![(
+        "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
+        uefi::get_secureboot_state_event(secureboot_enabled).hash(),
+    )];
     let sb_var_loader = EFIVarsLoader::new(
         "test/efivars/qemu-ovmf/fcos-42",
         SECURE_BOOT_ATTR_HEADER_LENGTH,
         get_secure_boot_targets(),
     );
-    let mut hashes: Vec<(String, Vec<u8>)> = sb_var_loader
-        .map(|var| ("EV_EFI_VARIABLE_DRIVER_CONFIG".into(), var.hash()))
-        .collect();
+    hashes.extend(sb_var_loader.map(|var| ("EV_EFI_VARIABLE_DRIVER_CONFIG".into(), var.hash())));
 
     hashes.push((
         "EV_SEPARATOR".into(),
@@ -172,24 +176,28 @@ fn compute_pcr7() -> Pcr {
     ));
 
     // TODO: parametrize path
-    let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
     let shim_bin = Shim::load_from_file("./test/shimx64.efi");
-    let shim_cert = uefi::find_shim_cert_in_db(sb_db.data(), &shim_bin);
-    match shim_cert {
-        Some(cert) => hashes.push((
-            "EV_EFI_VARIABLE_AUTHORITY".into(),
-            uefi::UEFIVariableData::new(uefi::GUID_SECURITY_DATABASE, "db", cert).hash(),
-        )),
-        None => panic!("Can't find shim signature certificate in secure boot db"),
+    if secureboot_enabled {
+        // TODO: parametrize path
+        let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
+        let shim_cert = uefi::find_shim_cert_in_db(sb_db.data(), &shim_bin);
+        match shim_cert {
+            Some(cert) => hashes.push((
+                "EV_EFI_VARIABLE_AUTHORITY".into(),
+                uefi::UEFIVariableData::new(uefi::GUID_SECURITY_DATABASE, "db", cert).hash(),
+            )),
+            None => panic!("Can't find shim signature certificate in secure boot db"),
+        }
     }
 
     let sbatlevel = shim_bin.get_sbatlevel_uefivar(&SbatLevelPolicyType::PREVIOUS);
-    match sbatlevel {
-        None => hashes.push((
+    if sbatlevel.is_none() || !secureboot_enabled {
+        hashes.push((
             "EV_EFI_VARIABLE_AUTHORITY".into(),
             get_sbat_var_original_uefivar().hash(),
-        )),
-        Some(level) => hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), level.hash())),
+        ));
+    } else if let Some(level) = sbatlevel {
+        hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), level.hash()));
     }
 
     let mut result =
