@@ -1,150 +1,11 @@
 use crate::uefi::{GUID_SHIM_LOCK, UEFIVariableData};
-use lief::generic::Section;
-use std::fs::File;
-use std::os::unix::fs::FileExt;
 
-pub struct Shim {
-    image: lief::pe::Binary,
-    path: String,
-}
-
-const SHIM_VENDOR_CERT_SECTION: &str = ".vendor_cert";
-const SHIM_SBATLEVEL_SECTION: &str = ".sbatlevel";
+pub const SHIM_SBATLEVEL_SECTION: &str = ".sbatlevel";
 const SBAT_VAR_ORIGINAL: &str = "sbat,1,2021030218\n";
 
 pub enum SbatLevelPolicyType {
     PREVIOUS,
     LATEST,
-}
-
-impl Shim {
-    pub fn load_from_file(path: &str) -> Shim {
-        Shim {
-            image: lief::pe::Binary::parse(path).unwrap(),
-            path: path.into(),
-        }
-    }
-
-    pub fn image(&self) -> &lief::pe::Binary {
-        &self.image
-    }
-
-    fn long_section_name(&self, mut name: String) -> String {
-        if name.as_bytes()[0] as char != '/' {
-            return name;
-        }
-        name.remove(0);
-        // Symbols are 18 bytes long
-        let mut string_offset = self.image.header().pointerto_symbol_table()
-            + self.image.header().numberof_symbols() * 18
-            + name.parse::<u32>().unwrap();
-        let mut long_name = String::new();
-        let mut next_char: [u8; 1] = [0];
-        loop {
-            let image_file = File::open(&self.path).unwrap();
-            if image_file
-                .read_exact_at(&mut next_char, string_offset as u64)
-                .is_err()
-                || next_char[0] == 0
-            {
-                break;
-            }
-
-            long_name.push(next_char[0] as char);
-            string_offset += 1;
-        }
-        long_name
-    }
-
-    fn section(&self, name: &str) -> Option<Vec<u8>> {
-        for section in self.image.sections() {
-            if self.long_section_name(section.name()) == name {
-                return Some(section.content().to_vec());
-            }
-        }
-        None
-    }
-
-    pub fn get_sbatlevel_uefivar(
-        &self,
-        sbatlevel_policy: &SbatLevelPolicyType,
-    ) -> Option<UEFIVariableData> {
-        let sbatlevel_raw = self.section(SHIM_SBATLEVEL_SECTION)?;
-        Some(UEFIVariableData::new(
-            GUID_SHIM_LOCK,
-            "SbatLevel",
-            get_sbatlevel_section(&sbatlevel_raw, sbatlevel_policy),
-        ))
-    }
-
-    fn get_vendor_cert_auth(&self) -> Option<Vec<u8>> {
-        let vendor_cert_raw = self.section(SHIM_VENDOR_CERT_SECTION)?;
-        // 4 u32 header consisting of:
-        //  - auth_size
-        //  - deauth_size
-        //  - auth_offset
-        //  - deauth_offset
-        let auth_size = u32::from_le_bytes(
-            vendor_cert_raw[0..4]
-                .try_into()
-                .expect("Badly hardcoded section size"),
-        ) as usize;
-        let auth_offset = u32::from_le_bytes(
-            vendor_cert_raw[8..12]
-                .try_into()
-                .expect("Badly hardcoded section size"),
-        ) as usize;
-        Some(vendor_cert_raw[auth_offset..auth_offset + auth_size].to_vec())
-    }
-
-    /// The shim pe file can carry a .vendor_cert section, in which it could
-    /// store certificates in db format.
-    /// This function parses the db and returns the certificates
-    pub fn vendor_db(&self) -> Vec<crate::certs::X509Cert> {
-        match self.get_vendor_cert_auth() {
-            None => vec![],
-            Some(certs) => match crate::certs::get_db_certs(&certs) {
-                Ok(res) => res,
-                Err(_) => vec![],
-            },
-        }
-    }
-
-    /// The .vendor_cert section of the shim pe file could also store just a
-    /// certificate.
-    /// This function parses the certificate and returns a vector that holds it
-    pub fn vendor_cert(&self) -> Vec<crate::certs::X509Cert> {
-        if let Some(vendor_cert_auth) = self.get_vendor_cert_auth() {
-            return match crate::certs::X509Cert::from_der(&vendor_cert_auth) {
-                Ok(cert) => vec![cert],
-                Err(_) => vec![],
-            };
-        }
-        return vec![];
-    }
-
-    pub fn signatures(&self) -> lief::pe::signature::Signatures {
-        self.image.signatures()
-    }
-
-    pub fn find_cert_in_db(&self, db: &Vec<crate::certs::X509Cert>) -> Option<Vec<u8>> {
-        for signature in self.signatures() {
-            for certificate in signature.certificates() {
-                let shim_cert_subject = certificate.subject();
-                let shim_cert_issuer = certificate.issuer();
-                for cert in db {
-                    if cert.subject == shim_cert_subject || cert.subject == shim_cert_issuer {
-                        return Some(cert.raw.clone());
-                    }
-                }
-            }
-        }
-        None
-    }
-}
-
-pub fn get_sbat_var_original_uefivar() -> UEFIVariableData {
-    UEFIVariableData::new(GUID_SHIM_LOCK, "SbatLevel", SBAT_VAR_ORIGINAL.into())
 }
 
 // Given the raw .sbatlevel section data, it returns the .sbatlevel data of the
@@ -185,4 +46,21 @@ fn get_sbatlevel_section(sbatlevel_raw: &[u8], sbatlevel_policy: &SbatLevelPolic
     }
 
     sbatlevel_raw[policy_offset..policy_end].to_vec()
+}
+
+pub fn get_sbat_var_original_uefivar() -> UEFIVariableData {
+    UEFIVariableData::new(GUID_SHIM_LOCK, "SbatLevel", SBAT_VAR_ORIGINAL.into())
+}
+
+/// Given the raw data of the .sbatlevel section, and the policy type, it
+/// process it and returns a UEFIVariableData structure.
+pub fn get_sbatlevel_uefivar(
+    sbatlevel_raw: &[u8],
+    sbatlevel_policy: &SbatLevelPolicyType,
+) -> UEFIVariableData {
+    UEFIVariableData::new(
+        GUID_SHIM_LOCK,
+        "SbatLevel",
+        get_sbatlevel_section(sbatlevel_raw, sbatlevel_policy),
+    )
 }

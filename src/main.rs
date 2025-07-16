@@ -1,4 +1,3 @@
-use crate::shim::{SbatLevelPolicyType, Shim, get_sbat_var_original_uefivar};
 use crate::uefi::efivars::{
     EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets, load_db,
 };
@@ -9,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 pub mod certs;
+pub mod pefile;
 pub mod shim;
 pub mod uefi;
 
@@ -177,7 +177,7 @@ fn compute_pcr7() -> Pcr {
     ));
 
     // TODO: parametrize path
-    let shim_bin = Shim::load_from_file("./test/shimx64.efi");
+    let shim_bin = pefile::PeFile::load_from_file("./test/shimx64.efi");
     if secureboot_enabled {
         // TODO: parametrize path
         let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
@@ -192,14 +192,15 @@ fn compute_pcr7() -> Pcr {
         }
     }
 
-    let sbatlevel = shim_bin.get_sbatlevel_uefivar(&SbatLevelPolicyType::PREVIOUS);
-    if sbatlevel.is_none() || !secureboot_enabled {
+    let sbatlevel_raw = shim_bin.section(shim::SHIM_SBATLEVEL_SECTION);
+    if sbatlevel_raw.is_none() || !secureboot_enabled {
         hashes.push((
             "EV_EFI_VARIABLE_AUTHORITY".into(),
-            get_sbat_var_original_uefivar().hash(),
+            shim::get_sbat_var_original_uefivar().hash(),
         ));
-    } else if let Some(level) = sbatlevel {
-        hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), level.hash()));
+    } else if let Some(data) = sbatlevel_raw {
+        let sbatlevel = shim::get_sbatlevel_uefivar(&data, &shim::SbatLevelPolicyType::PREVIOUS);
+        hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), sbatlevel.hash()));
     }
 
     let mut result =
