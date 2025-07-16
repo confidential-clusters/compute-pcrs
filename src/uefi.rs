@@ -49,6 +49,7 @@ pub fn get_secureboot_state_event(enabled: bool) -> UEFIVariableData {
 
 // Struct representing UEFIVariable data and the events it could measure in
 // the TPM
+#[derive(Debug)]
 pub struct UEFIVariableData {
     variable_name: Uuid,
     unicode_name_len: u64,
