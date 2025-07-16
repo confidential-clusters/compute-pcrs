@@ -161,12 +161,18 @@ fn compute_pcr11() -> Pcr {
 fn compute_pcr7() -> Pcr {
     // TODO: parametrize secureboot_enabled boolean
     let secureboot_enabled: bool = true;
+    // TODO: parametrize path
+    let efivars_path = "test/efivars/qemu-ovmf/fcos-42";
+    // TODO: parametrize path
+    let shim_path = "./test/shimx64.efi";
+    // TODO: parametrize path
+    let grub_path = "./test/EFI/fedora/grubx64.efi";
     let mut hashes: Vec<(String, Vec<u8>)> = vec![(
         "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
         uefi::get_secureboot_state_event(secureboot_enabled).hash(),
     )];
     let sb_var_loader = EFIVarsLoader::new(
-        "test/efivars/qemu-ovmf/fcos-42",
+        efivars_path,
         SECURE_BOOT_ATTR_HEADER_LENGTH,
         get_secure_boot_targets(),
     );
@@ -177,12 +183,10 @@ fn compute_pcr7() -> Pcr {
         Sha256::digest(hex::decode("00000000").unwrap()).to_vec(),
     ));
 
-    // TODO: parametrize path
-    let shim_bin = pefile::PeFile::load_from_file("./test/shimx64.efi");
-    let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
+    let shim_bin = pefile::PeFile::load_from_file(shim_path);
+    let sb_db = load_db(efivars_path);
     let sb_db_certs = crate::certs::get_db_certs(sb_db.data()).unwrap();
     if secureboot_enabled {
-        // TODO: parametrize path
         let shim_cert = shim_bin.find_cert_in_db(&sb_db_certs);
         match shim_cert {
             Some(cert) => hashes.push((
@@ -209,9 +213,7 @@ fn compute_pcr7() -> Pcr {
         let shim_vendor_cert = shim_bin.vendor_cert();
         let shim_vendor_db = shim_bin.vendor_db();
         // In the case of UKI, the UKI and UKI addons should be processed
-        let binaries = vec![pefile::PeFile::load_from_file(
-            "./test/EFI/fedora/grubx64.efi",
-        )];
+        let binaries = vec![pefile::PeFile::load_from_file(grub_path)];
         for bin in binaries {
             // look for cert in secureboot
             if let Some(sb_cert) = bin.find_cert_in_db(&sb_db_certs) {
