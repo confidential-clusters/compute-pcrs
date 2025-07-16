@@ -1,9 +1,8 @@
 use sha2::{Digest, Sha256};
-use std::fs;
-use std::path::Path;
 use uuid::{Uuid, uuid};
 
 pub mod efivars;
+pub mod secureboot;
 
 pub const GUID_GLOBAL_VARIABLE: Uuid = uuid!("8be4df61-93ca-11d2-aa0d-00e098032b8c");
 pub const GUID_SECURITY_DATABASE: Uuid = uuid!("d719b2cb-3d3a-4596-a3bc-dad00e67656f");
@@ -21,19 +20,6 @@ pub fn guid_to_le_bytes(guid: &Uuid) -> Vec<u8> {
     guid_bytes_le[6..8].reverse();
     // Bytes from 8 on are not reversed
     guid_bytes_le
-}
-
-/// Load data from a UEFI variable given:
-///     - path to the directory holding the file
-///     - var, UEFI variable name
-///     - guid
-///     - attribute header length
-fn load_uefi_var_data(path: &Path, var: &str, guid: &Uuid, attribute_header: usize) -> Vec<u8> {
-    let mut data = fs::read(path.join(format!("{var}-{guid}"))).unwrap();
-    if attribute_header > 0 {
-        return data.split_off(attribute_header);
-    }
-    data
 }
 
 pub fn get_secureboot_state_event(enabled: bool) -> UEFIVariableData {
@@ -71,11 +57,6 @@ impl UEFIVariableData {
             unicode_name: unicode_name.encode_utf16().collect(),
             variable_data: data,
         }
-    }
-
-    pub fn load(path: &Path, var: &str, guid: Uuid, attribute_header: usize) -> UEFIVariableData {
-        let data = load_uefi_var_data(path, var, &guid, attribute_header);
-        UEFIVariableData::new(guid, var, data)
     }
 
     // Encode the UEFIVariableData struct into a u8 vec/buffer that can be

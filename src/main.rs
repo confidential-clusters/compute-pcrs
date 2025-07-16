@@ -1,6 +1,7 @@
 use crate::uefi::efivars::{
-    EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets, load_db,
+    EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets,
 };
+use crate::uefi::secureboot::{SecureBootdbLoader, collect_secure_boot_hashes};
 use anyhow::{Ok, Result};
 use hex_literal::hex;
 use lief::generic::Section;
@@ -175,7 +176,9 @@ fn compute_pcr7() -> Pcr {
         SECURE_BOOT_ATTR_HEADER_LENGTH,
         get_secure_boot_targets(),
     );
-    hashes.extend(sb_var_loader.map(|var| ("EV_EFI_VARIABLE_DRIVER_CONFIG".into(), var.hash())));
+
+    // Extend PCR7 with events for PK, KEK, db and dbx
+    hashes.extend(collect_secure_boot_hashes(sb_var_loader.clone()));
 
     hashes.push((
         "EV_SEPARATOR".into(),
@@ -183,8 +186,8 @@ fn compute_pcr7() -> Pcr {
     ));
 
     let shim_bin = esp.shim();
-    let sb_db = load_db(efivars_path);
-    let sb_db_certs = crate::certs::get_db_certs(sb_db.data()).unwrap();
+    let sb_db = sb_var_loader.secureboot_db();
+    let sb_db_certs = crate::certs::get_db_certs(&sb_db).unwrap();
     if secureboot_enabled {
         let shim_cert = shim_bin.find_cert_in_db(&sb_db_certs);
         match shim_cert {
