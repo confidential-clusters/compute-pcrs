@@ -6,6 +6,7 @@ use hex_literal::hex;
 use lief::generic::Section;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 
 pub mod certs;
 pub mod pefile;
@@ -151,7 +152,7 @@ fn compute_pcr11() -> Pcr {
 ///    - EV_SEPARATOR
 ///    - EV_EFI_VARIABLE_AUTHORITY: db
 ///    - EV_EFI_VARIABLE_AUTHORITY: SbatLevel
-///    - EV_EFI_VARIABLE_AUTHORITY: MokListRT (TODO)
+///    - EV_EFI_VARIABLE_AUTHORITY: MokListRT
 ///
 /// EFI vars are needed to compute pcr7.
 /// EFI vars can be loaded from
@@ -178,10 +179,10 @@ fn compute_pcr7() -> Pcr {
 
     // TODO: parametrize path
     let shim_bin = pefile::PeFile::load_from_file("./test/shimx64.efi");
+    let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
+    let sb_db_certs = crate::certs::get_db_certs(sb_db.data()).unwrap();
     if secureboot_enabled {
         // TODO: parametrize path
-        let sb_db = load_db("test/efivars/qemu-ovmf/fcos-42");
-        let sb_db_certs = crate::certs::get_db_certs(sb_db.data()).unwrap();
         let shim_cert = shim_bin.find_cert_in_db(&sb_db_certs);
         match shim_cert {
             Some(cert) => hashes.push((
@@ -201,6 +202,57 @@ fn compute_pcr7() -> Pcr {
     } else if let Some(data) = sbatlevel_raw {
         let sbatlevel = shim::get_sbatlevel_uefivar(&data, &shim::SbatLevelPolicyType::PREVIOUS);
         hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), sbatlevel.hash()));
+    }
+
+    if secureboot_enabled {
+        let mut logged_cert_hashes = HashSet::new();
+        let shim_vendor_cert = shim_bin.vendor_cert();
+        let shim_vendor_db = shim_bin.vendor_db();
+        // In the case of UKI, the UKI and UKI addons should be processed
+        let binaries = vec![pefile::PeFile::load_from_file(
+            "./test/EFI/fedora/grubx64.efi",
+        )];
+        for bin in binaries {
+            // look for cert in secureboot
+            if let Some(sb_cert) = bin.find_cert_in_db(&sb_db_certs) {
+                let hash =
+                    uefi::UEFIVariableData::new(uefi::GUID_SECURITY_DATABASE, "db", sb_cert).hash();
+                if !logged_cert_hashes.contains(&hash) {
+                    logged_cert_hashes.insert(hash.clone());
+                    hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), hash));
+                }
+            }
+
+            // look for cert in shim vendor db
+            if let Some(vendor_db) = bin.find_cert_in_db(&shim_vendor_db) {
+                let hash = uefi::UEFIVariableData::new(
+                    uefi::GUID_SECURITY_DATABASE,
+                    "vendor_db",
+                    vendor_db,
+                )
+                .hash();
+                if !logged_cert_hashes.contains(&hash) {
+                    logged_cert_hashes.insert(hash.clone());
+                    hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), hash));
+                }
+            }
+
+            // look for cert in shim vendor cert
+            if let Some(vendor_cert) = bin.find_cert_in_db(&shim_vendor_cert) {
+                let mut vendor_cert_data = uefi::guid_to_le_bytes(&uefi::GUID_SHIM_LOCK);
+                vendor_cert_data.extend(&vendor_cert);
+                let hash = uefi::UEFIVariableData::new(
+                    uefi::GUID_SHIM_LOCK,
+                    "MokListRT",
+                    vendor_cert_data,
+                )
+                .hash();
+                if !logged_cert_hashes.contains(&hash) {
+                    logged_cert_hashes.insert(hash.clone());
+                    hashes.push(("EV_EFI_VARIABLE_AUTHORITY".into(), hash));
+                }
+            }
+        }
     }
 
     let mut result =
