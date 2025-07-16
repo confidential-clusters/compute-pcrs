@@ -9,6 +9,7 @@ use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 
 pub mod certs;
+mod esp;
 pub mod pefile;
 pub mod shim;
 pub mod uefi;
@@ -164,9 +165,7 @@ fn compute_pcr7() -> Pcr {
     // TODO: parametrize path
     let efivars_path = "test/efivars/qemu-ovmf/fcos-42";
     // TODO: parametrize path
-    let shim_path = "./test/shimx64.efi";
-    // TODO: parametrize path
-    let grub_path = "./test/EFI/fedora/grubx64.efi";
+    let esp = esp::Esp::new("./test/ESP/fcos42/").unwrap();
     let mut hashes: Vec<(String, Vec<u8>)> = vec![(
         "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
         uefi::get_secureboot_state_event(secureboot_enabled).hash(),
@@ -183,7 +182,7 @@ fn compute_pcr7() -> Pcr {
         Sha256::digest(hex::decode("00000000").unwrap()).to_vec(),
     ));
 
-    let shim_bin = pefile::PeFile::load_from_file(shim_path);
+    let shim_bin = esp.shim();
     let sb_db = load_db(efivars_path);
     let sb_db_certs = crate::certs::get_db_certs(sb_db.data()).unwrap();
     if secureboot_enabled {
@@ -213,7 +212,7 @@ fn compute_pcr7() -> Pcr {
         let shim_vendor_cert = shim_bin.vendor_cert();
         let shim_vendor_db = shim_bin.vendor_db();
         // In the case of UKI, the UKI and UKI addons should be processed
-        let binaries = vec![pefile::PeFile::load_from_file(grub_path)];
+        let binaries = vec![esp.grub()];
         for bin in binaries {
             // look for cert in secureboot
             if let Some(sb_cert) = bin.find_cert_in_db(&sb_db_certs) {
