@@ -23,14 +23,7 @@ pub fn guid_to_le_bytes(guid: &Uuid) -> Vec<u8> {
 }
 
 pub fn get_secureboot_state_event(enabled: bool) -> UEFIVariableData {
-    UEFIVariableData::new(
-        GUID_GLOBAL_VARIABLE,
-        "SecureBoot",
-        match enabled {
-            true => vec![enabled as u8],
-            false => vec![],
-        },
-    )
+    UEFIVariableData::new(GUID_GLOBAL_VARIABLE, "SecureBoot", vec![enabled as u8])
 }
 
 // Struct representing UEFIVariable data and the events it could measure in
