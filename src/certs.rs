@@ -94,6 +94,10 @@ fn get_db_certs_raw(
     let mut certs = Vec::new();
     let mut offset = 0;
 
+    if data.is_empty() {
+        return Ok(vec![]);
+    }
+
     while offset < data.len() - 28 {
         let list_type = &data[offset..offset + 16];
         let list_size = u32::from_le_bytes(

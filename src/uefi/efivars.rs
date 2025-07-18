@@ -73,7 +73,16 @@ pub fn get_secure_boot_targets() -> Vec<(String, Uuid)> {
 ///     - guid
 ///     - attribute header length
 fn load_uefi_var_data(path: &Path, var: &str, guid: &Uuid, attribute_header: usize) -> Vec<u8> {
-    let mut data = fs::read(path.join(format!("{var}-{guid}"))).unwrap();
+    let mut data = match fs::read(path.join(format!("{var}-{guid}"))) {
+        Ok(res) => res,
+        Err(err) => {
+            let path_md = fs::metadata(path).unwrap();
+            if err.kind() == std::io::ErrorKind::NotFound && path_md.is_dir() {
+                return vec![];
+            }
+            panic!("{:?}", err);
+        }
+    };
     if attribute_header > 0 {
         return data.split_off(attribute_header);
     }
