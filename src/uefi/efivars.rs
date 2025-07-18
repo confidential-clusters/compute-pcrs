@@ -19,20 +19,14 @@ pub struct EFIVarsLoader {
     path: PathBuf,
     attribute_header: usize,
     index: usize,
-    targets: Vec<(String, Uuid)>,
 }
 
 impl EFIVarsLoader {
-    pub fn new(
-        path: &str,
-        attribute_header: usize,
-        variables: Vec<(String, Uuid)>,
-    ) -> EFIVarsLoader {
+    pub fn new(path: &str, attribute_header: usize) -> EFIVarsLoader {
         EFIVarsLoader {
             path: path.into(),
             attribute_header,
             index: 0,
-            targets: variables,
         }
     }
 
@@ -46,7 +40,7 @@ impl Iterator for EFIVarsLoader {
     type Item = UEFIVariableData;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let (var, guid) = self.targets.get(self.index)?;
+        let (var, guid) = SECURE_BOOT_VARIABLES.get(self.index)?;
         self.index += 1;
         Some(self.load_efivar(guid, var))
     }

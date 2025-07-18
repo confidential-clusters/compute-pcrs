@@ -1,6 +1,4 @@
-use crate::uefi::efivars::{
-    EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH, get_secure_boot_targets,
-};
+use crate::uefi::efivars::{EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH};
 use crate::uefi::secureboot::{SecureBootdbLoader, collect_secure_boot_hashes};
 use anyhow::{Ok, Result};
 use hex_literal::hex;
@@ -171,11 +169,7 @@ fn compute_pcr7() -> Pcr {
         "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
         uefi::get_secureboot_state_event(secureboot_enabled).hash(),
     )];
-    let sb_var_loader = EFIVarsLoader::new(
-        efivars_path,
-        SECURE_BOOT_ATTR_HEADER_LENGTH,
-        get_secure_boot_targets(),
-    );
+    let sb_var_loader = EFIVarsLoader::new(efivars_path, SECURE_BOOT_ATTR_HEADER_LENGTH);
 
     // Extend PCR7 with events for PK, KEK, db and dbx
     hashes.extend(collect_secure_boot_hashes(sb_var_loader.clone()));
