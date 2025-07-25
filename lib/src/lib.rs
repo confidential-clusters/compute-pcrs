@@ -75,7 +75,7 @@ pub fn compute_pcr4() -> Pcr {
         hex!("1714C36BF81EF84ECB056D6BA815DCC8CA889074AFB69D621F1C4D8FA03B23F0")
     );
 
-    let pcr4 = Pcr {
+    Pcr {
         id: 4,
         value: hex::encode(result),
         parts: hashes
@@ -85,11 +85,7 @@ pub fn compute_pcr4() -> Pcr {
                 hash: hex::encode(h),
             })
             .collect(),
-    };
-
-    // println!("{}", serde_json::to_string_pretty(&pcr4).unwrap());
-
-    pcr4
+    }
 }
 
 pub fn compute_pcr11() -> Pcr {
@@ -119,7 +115,7 @@ pub fn compute_pcr11() -> Pcr {
 
     // println!("{}", hex::encode(&result));
 
-    let pcr11 = Pcr {
+    Pcr {
         id: 11,
         value: hex::encode(result),
         parts: hashes
@@ -129,11 +125,7 @@ pub fn compute_pcr11() -> Pcr {
                 hash: hex::encode(h),
             })
             .collect(),
-    };
-
-    // println!("{}", serde_json::to_string_pretty(&pcr11).unwrap());
-
-    pcr11
+    }
 }
 
 /// PCR 7 contains the digests of the variables defining the Secure Boot
@@ -259,7 +251,7 @@ pub fn compute_pcr7() -> Pcr {
         result = hasher.finalize().to_vec();
     }
 
-    let pcr7 = Pcr {
+    Pcr {
         id: 7,
         value: hex::encode(result),
         parts: hashes
@@ -269,6 +261,5 @@ pub fn compute_pcr7() -> Pcr {
                 hash: hex::encode(h),
             })
             .collect(),
-    };
-    pcr7
+    }
 }
