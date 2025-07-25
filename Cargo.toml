@@ -1,17 +1,10 @@
-[package]
-name = "compute-pcrs"
-version = "0.1.0"
-edition = "2024"
-repository = "https://github.com/confidential-clusters/compute-pcrs"
-rust-version = "1.85.0"
+[workspace]
+members = [
+    "cli",
+    "lib",
+]
+resolver = "3"
 
-[dependencies]
-lief = "0.16.6"
-anyhow = "1.0.97"
-hex = "0.4.3"
-hex-literal = "1.0.0"
-sha2 = "0.10.9"
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-uuid = "1.17.0"
-openssl = "0.10.73"
+# https://kobzol.github.io/rust/rustc/2025/05/20/disable-debuginfo-to-improve-rust-compile-times.html
+[profile.dev]
+debug = false

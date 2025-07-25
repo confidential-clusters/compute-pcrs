@@ -74,7 +74,7 @@ fn load_uefi_var_data(path: &Path, var: &str, guid: &Uuid, attribute_header: usi
             if err.kind() == std::io::ErrorKind::NotFound && path_md.is_dir() {
                 return vec![];
             }
-            panic!("{:?}", err);
+            panic!("{err:?}");
         }
     };
     if attribute_header > 0 {

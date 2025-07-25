@@ -13,7 +13,7 @@ const ESP_VENDOR_NAMES: [&str; 2] = ["redhat", "fedora"];
 
 fn esp_vendor_path(esp_root_path: &Path) -> io::Result<PathBuf> {
     for vendor in ESP_VENDOR_NAMES {
-        let vendor_path = esp_root_path.join(format!("EFI/{}", vendor));
+        let vendor_path = esp_root_path.join(format!("EFI/{vendor}"));
         match fs::metadata(&vendor_path) {
             Err(_) => {}
             Ok(metadata) => {
