@@ -1,6 +1,5 @@
 use crate::uefi::efivars::{EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH};
 use crate::uefi::secureboot::{SecureBootdbLoader, collect_secure_boot_hashes};
-use anyhow::{Ok, Result};
 use hex_literal::hex;
 use lief::generic::Section;
 use serde::{Deserialize, Serialize};
@@ -20,18 +19,13 @@ struct Part {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Pcr {
+pub struct Pcr {
     id: u64,
     value: String,
     parts: Vec<Part>,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Output {
-    pcrs: Vec<Pcr>,
-}
-
-fn compute_pcr4() -> Pcr {
+pub fn compute_pcr4() -> Pcr {
     let ev_efi_action_hash: Vec<u8> =
         Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();
     let ev_separator_hash: Vec<u8> = Sha256::digest(hex::decode("00000000").unwrap()).to_vec();
@@ -98,7 +92,7 @@ fn compute_pcr4() -> Pcr {
     pcr4
 }
 
-fn compute_pcr11() -> Pcr {
+pub fn compute_pcr11() -> Pcr {
     let sections: Vec<&str> = vec![".linux", ".osrel", ".cmdline", ".initrd", ".uname", ".sbat"];
 
     let uki = "a9ea995b29cda6783b676e2ec2666d8813882b604625389428ece4eee074e742.efi";
@@ -158,7 +152,7 @@ fn compute_pcr11() -> Pcr {
 /// EFI vars can be loaded from
 ///     - efivars
 ///
-fn compute_pcr7() -> Pcr {
+pub fn compute_pcr7() -> Pcr {
     // TODO: parametrize secureboot_enabled boolean
     let secureboot_enabled: bool = true;
     // TODO: parametrize path
@@ -277,14 +271,4 @@ fn compute_pcr7() -> Pcr {
             .collect(),
     };
     pcr7
-}
-
-fn main() -> Result<()> {
-    let pcrs = vec![compute_pcr4(), compute_pcr7(), compute_pcr11()];
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&Output { pcrs }).unwrap()
-    );
-
-    Ok(())
 }
