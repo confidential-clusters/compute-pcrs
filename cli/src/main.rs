@@ -24,7 +24,7 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    // Compute all possible PCR values
+    /// Compute all possible PCR values from the binaries available in the current environment. Meant to be run inside a Bootable Container.
     All {
         #[arg(
             long,
@@ -117,8 +117,8 @@ fn main() -> Result<()> {
         } => {
             let pcrs = vec![
                 compute_pcr4(kernels, esp, *uki, !no_secureboot),
-                compute_pcr7(),
-                compute_pcr11(),
+                /* compute_pcr7(), */
+                /* compute_pcr11(), */
             ];
             println!(
                 "{}",
