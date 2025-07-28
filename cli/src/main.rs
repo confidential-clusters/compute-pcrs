@@ -28,6 +28,13 @@ enum Command {
     All {
         #[arg(
             long,
+            short,
+            default_value = "/usr/lib/bootupd/updates/",
+            help = "Path to the ESP directory"
+        )]
+        esp: String,
+        #[arg(
+            long,
             default_value_t = false,
             help = "Indicates that the linux image is an UKI image (e.g. is not vmlinuz))"
         )]
@@ -41,6 +48,13 @@ enum Command {
     },
     /// Compute PCR 4
     Pcr4 {
+        #[arg(
+            long,
+            short,
+            default_value = "/usr/lib/bootupd/updates/",
+            help = "Path to the ESP directory"
+        )]
+        esp: String,
         #[arg(
             long,
             default_value_t = false,
@@ -81,9 +95,13 @@ fn main() -> Result<()> {
         .init();
 
     match &cli.command {
-        Command::All { uki, no_secureboot } => {
+        Command::All {
+            esp,
+            uki,
+            no_secureboot,
+        } => {
             let pcrs = vec![
-                compute_pcr4(*uki, !no_secureboot),
+                compute_pcr4(esp, *uki, !no_secureboot),
                 compute_pcr7(),
                 compute_pcr11(),
             ];
@@ -93,8 +111,12 @@ fn main() -> Result<()> {
             );
             Ok(())
         }
-        Command::Pcr4 { uki, no_secureboot } => {
-            let pcr = compute_pcr4(*uki, !no_secureboot);
+        Command::Pcr4 {
+            esp,
+            uki,
+            no_secureboot,
+        } => {
+            let pcr = compute_pcr4(esp, *uki, !no_secureboot);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }

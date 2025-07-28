@@ -24,9 +24,8 @@ pub struct Pcr {
     parts: Vec<Part>,
 }
 
-pub fn compute_pcr4(uki: bool, secureboot: bool) -> Pcr {
-    // TODO: parametrize path
-    let esp = esp::Esp::new("./test/ESP/fcos42/").unwrap();
+pub fn compute_pcr4(esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
+    let esp = esp::Esp::new(esp_path).unwrap();
     // TODO: parametrize path
     let linux_image_path = "./test/ESP/fcos42/EFI/Linux/vmlinuz";
 
