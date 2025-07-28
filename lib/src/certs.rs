@@ -49,17 +49,17 @@ fn entry_to_string(entry: &openssl::x509::X509NameEntryRef) -> Option<String> {
         .unwrap()
         .replace(",", "\\,");
     if object == "countryName" {
-        return Some(format!("C={}", data_str));
+        return Some(format!("C={data_str}"));
     } else if object == "stateOrProvinceName" {
-        return Some(format!("ST={}", data_str));
+        return Some(format!("ST={data_str}"));
     } else if object == "localityName" {
-        return Some(format!("L={}", data_str));
+        return Some(format!("L={data_str}"));
     } else if object == "organizationName" {
-        return Some(format!("O={}", data_str));
+        return Some(format!("O={data_str}"));
     } else if object == "commonName" {
-        return Some(format!("CN={}", data_str));
+        return Some(format!("CN={data_str}"));
     } else if object == "organizationalUnitName" {
-        return Some(format!("OU={}", data_str));
+        return Some(format!("OU={data_str}"));
     }
     None
 }
