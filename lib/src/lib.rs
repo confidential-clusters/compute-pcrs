@@ -1,6 +1,5 @@
 use crate::uefi::efivars::{EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH};
 use crate::uefi::secureboot::{SecureBootdbLoader, collect_secure_boot_hashes};
-use hex_literal::hex;
 use lief::generic::Section;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -26,34 +25,34 @@ pub struct Pcr {
 }
 
 pub fn compute_pcr4() -> Pcr {
+    // TODO: parametrize secureboot_enabled boolean
+    let secureboot_enabled: bool = true;
+    // TODO: parametrize path
+    let esp = esp::Esp::new("./test/ESP/fcos42/").unwrap();
+    // TODO: parametrize path
+    let linux_image_path = "./test/ESP/fcos42/EFI/Linux/vmlinuz";
+    // TODO: parametrize
+    let uki = false;
+
     let ev_efi_action_hash: Vec<u8> =
         Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();
     let ev_separator_hash: Vec<u8> = Sha256::digest(hex::decode("00000000").unwrap()).to_vec();
-
-    let bins = [
-        "shim.efi",
-        "grubx64.efi",
-        "a9ea995b29cda6783b676e2ec2666d8813882b604625389428ece4eee074e742.efi",
-    ];
 
     let mut hashes: Vec<(String, Vec<u8>)> = vec![];
     hashes.push(("EV_EFI_ACTION".into(), ev_efi_action_hash));
     hashes.push(("EV_SEPARATOR".into(), ev_separator_hash));
 
+    let mut bins = vec![esp.shim(), esp.grub()];
+
+    if secureboot_enabled {
+        bins.push(pefile::PeFile::load_from_file(linux_image_path, !uki))
+    }
+
     let mut bin_hashes: Vec<(String, Vec<u8>)> = bins
         .iter()
-        .map(|b| {
-            let pe: lief::pe::Binary = lief::pe::Binary::parse(&format!("./test/{b}")).unwrap();
-            ((*b).into(), pe.authentihash(lief::pe::Algorithms::SHA_256))
-        })
+        .map(|b| ("EV_EFI_BOOT_SERVICES_APPLICATION".into(), b.authenticode()))
         .collect();
     hashes.append(&mut bin_hashes);
-
-    // println!("{:?}", ev_efi_action_hash);
-    // println!("{:?}", ev_separator_hash);
-    // hashes.iter().for_each(|h| {
-    //     println!("{:?}", h);
-    // });
 
     // Start with 0
     let mut result =
@@ -67,13 +66,6 @@ pub fn compute_pcr4() -> Pcr {
         hasher.update(h);
         result = hasher.finalize().to_vec();
     }
-
-    // println!("{}", hex::encode(result));
-
-    assert_eq!(
-        result[..],
-        hex!("1714C36BF81EF84ECB056D6BA815DCC8CA889074AFB69D621F1C4D8FA03B23F0")
-    );
 
     Pcr {
         id: 4,
