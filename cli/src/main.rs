@@ -29,6 +29,13 @@ enum Command {
         #[arg(
             long,
             short,
+            default_value = "/usr/lib/modules/",
+            help = "Path to the kernel modules directory. This helps finding the vmlinuz image"
+        )]
+        kernels: String,
+        #[arg(
+            long,
+            short,
             default_value = "/usr/lib/bootupd/updates/",
             help = "Path to the ESP directory"
         )]
@@ -48,6 +55,13 @@ enum Command {
     },
     /// Compute PCR 4
     Pcr4 {
+        #[arg(
+            long,
+            short,
+            default_value = "/usr/lib/modules/",
+            help = "Path to the kernel modules directory. This helps finding the vmlinuz image"
+        )]
+        kernels: String,
         #[arg(
             long,
             short,
@@ -96,12 +110,13 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Command::All {
+            kernels,
             esp,
             uki,
             no_secureboot,
         } => {
             let pcrs = vec![
-                compute_pcr4(esp, *uki, !no_secureboot),
+                compute_pcr4(kernels, esp, *uki, !no_secureboot),
                 compute_pcr7(),
                 compute_pcr11(),
             ];
@@ -112,11 +127,12 @@ fn main() -> Result<()> {
             Ok(())
         }
         Command::Pcr4 {
+            kernels,
             esp,
             uki,
             no_secureboot,
         } => {
-            let pcr = compute_pcr4(esp, *uki, !no_secureboot);
+            let pcr = compute_pcr4(kernels, esp, *uki, !no_secureboot);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }

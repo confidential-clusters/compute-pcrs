@@ -7,6 +7,7 @@ use std::collections::HashSet;
 
 pub mod certs;
 mod esp;
+mod linux;
 pub mod pefile;
 pub mod shim;
 pub mod uefi;
@@ -24,10 +25,8 @@ pub struct Pcr {
     parts: Vec<Part>,
 }
 
-pub fn compute_pcr4(esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
+pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
     let esp = esp::Esp::new(esp_path).unwrap();
-    // TODO: parametrize path
-    let linux_image_path = "./test/ESP/fcos42/EFI/Linux/vmlinuz";
 
     let ev_efi_action_hash: Vec<u8> =
         Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();
@@ -39,9 +38,10 @@ pub fn compute_pcr4(esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
 
     let mut bins = vec![esp.shim(), esp.grub()];
 
-    if secureboot {
-        bins.push(pefile::PeFile::load_from_file(linux_image_path, !uki).expect("Can't find vmlinuz image"))
+    if secureboot && !uki {
+        bins.push(linux::load_vmlinuz(kernels_dir).unwrap())
     }
+    // TODO: write condition for uki and implement logic
 
     let mut bin_hashes: Vec<(String, Vec<u8>)> = bins
         .iter()
