@@ -24,9 +24,7 @@ pub struct Pcr {
     parts: Vec<Part>,
 }
 
-pub fn compute_pcr4(uki: bool) -> Pcr {
-    // TODO: parametrize secureboot_enabled boolean
-    let secureboot_enabled: bool = true;
+pub fn compute_pcr4(uki: bool, secureboot: bool) -> Pcr {
     // TODO: parametrize path
     let esp = esp::Esp::new("./test/ESP/fcos42/").unwrap();
     // TODO: parametrize path
@@ -42,7 +40,7 @@ pub fn compute_pcr4(uki: bool) -> Pcr {
 
     let mut bins = vec![esp.shim(), esp.grub()];
 
-    if secureboot_enabled {
+    if secureboot {
         bins.push(pefile::PeFile::load_from_file(linux_image_path, !uki))
     }
 

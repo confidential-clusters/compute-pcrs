@@ -32,6 +32,12 @@ enum Command {
             help = "Indicates that the linux image is an UKI image (e.g. is not vmlinuz))"
         )]
         uki: bool,
+        #[arg(
+            long = "secureboot-disabled",
+            default_value_t = false,
+            help = "Compute PCRs as if secure boot was disabled in the system"
+        )]
+        no_secureboot: bool,
     },
     /// Compute PCR 4
     Pcr4 {
@@ -41,6 +47,12 @@ enum Command {
             help = "Indicates that the linux image is an UKI image (e.g. is not vmlinuz))"
         )]
         uki: bool,
+        #[arg(
+            long = "secureboot-disabled",
+            default_value_t = false,
+            help = "Compute PCRs as if secure boot was disabled in the system"
+        )]
+        no_secureboot: bool,
     },
     /// Compute PCR 7
     Pcr7 {},
@@ -69,16 +81,20 @@ fn main() -> Result<()> {
         .init();
 
     match &cli.command {
-        Command::All { uki } => {
-            let pcrs = vec![compute_pcr4(*uki), compute_pcr7(), compute_pcr11()];
+        Command::All { uki, no_secureboot } => {
+            let pcrs = vec![
+                compute_pcr4(*uki, !no_secureboot),
+                compute_pcr7(),
+                compute_pcr11(),
+            ];
             println!(
                 "{}",
                 serde_json::to_string_pretty(&Output { pcrs }).unwrap()
             );
             Ok(())
         }
-        Command::Pcr4 { uki } => {
-            let pcr = compute_pcr4(*uki);
+        Command::Pcr4 { uki, no_secureboot } => {
+            let pcr = compute_pcr4(*uki, !no_secureboot);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
