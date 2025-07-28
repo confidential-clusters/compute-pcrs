@@ -24,15 +24,13 @@ pub struct Pcr {
     parts: Vec<Part>,
 }
 
-pub fn compute_pcr4() -> Pcr {
+pub fn compute_pcr4(uki: bool) -> Pcr {
     // TODO: parametrize secureboot_enabled boolean
     let secureboot_enabled: bool = true;
     // TODO: parametrize path
     let esp = esp::Esp::new("./test/ESP/fcos42/").unwrap();
     // TODO: parametrize path
     let linux_image_path = "./test/ESP/fcos42/EFI/Linux/vmlinuz";
-    // TODO: parametrize
-    let uki = false;
 
     let ev_efi_action_hash: Vec<u8> =
         Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();

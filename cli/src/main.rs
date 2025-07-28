@@ -25,9 +25,23 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Command {
     // Compute all possible PCR values
-    All {},
+    All {
+        #[arg(
+            long,
+            default_value_t = false,
+            help = "Indicates that the linux image is an UKI image (e.g. is not vmlinuz))"
+        )]
+        uki: bool,
+    },
     /// Compute PCR 4
-    Pcr4 {},
+    Pcr4 {
+        #[arg(
+            long,
+            default_value_t = false,
+            help = "Indicates that the linux image is an UKI image (e.g. is not vmlinuz))"
+        )]
+        uki: bool,
+    },
     /// Compute PCR 7
     Pcr7 {},
     /// Compute PCR 11
@@ -55,16 +69,16 @@ fn main() -> Result<()> {
         .init();
 
     match &cli.command {
-        Command::All {} => {
-            let pcrs = vec![compute_pcr4(), compute_pcr7(), compute_pcr11()];
+        Command::All { uki } => {
+            let pcrs = vec![compute_pcr4(*uki), compute_pcr7(), compute_pcr11()];
             println!(
                 "{}",
                 serde_json::to_string_pretty(&Output { pcrs }).unwrap()
             );
             Ok(())
         }
-        Command::Pcr4 {} => {
-            let pcr = compute_pcr4();
+        Command::Pcr4 { uki } => {
+            let pcr = compute_pcr4(*uki);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
