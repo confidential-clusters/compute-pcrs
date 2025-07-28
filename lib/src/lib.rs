@@ -13,16 +13,16 @@ pub mod shim;
 pub mod uefi;
 
 #[derive(Serialize, Deserialize)]
-struct Part {
-    name: String,
-    hash: String,
+pub struct Part {
+    pub name: String,
+    pub hash: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Pcr {
-    id: u64,
-    value: String,
-    parts: Vec<Part>,
+    pub id: u64,
+    pub value: String,
+    pub parts: Vec<Part>,
 }
 
 pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
