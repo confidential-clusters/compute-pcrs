@@ -7,18 +7,35 @@ const SHIM_VENDOR_CERT_SECTION: &str = ".vendor_cert";
 pub struct PeFile {
     image: lief::pe::Binary,
     path: String,
+    vmlinuz: bool,
 }
 
 impl PeFile {
-    pub fn load_from_file(path: &str) -> PeFile {
-        PeFile {
-            image: lief::pe::Binary::parse(path).unwrap(),
+    pub fn load_from_file(path: &str, vmlinuz: bool) -> Option<PeFile> {
+        Some(PeFile {
+            image: lief::pe::Binary::parse(path)?,
             path: path.into(),
-        }
+            vmlinuz,
+        })
     }
 
     pub fn image(&self) -> &lief::pe::Binary {
         &self.image
+    }
+
+    pub fn authenticode(&self) -> Vec<u8> {
+        if self.vmlinuz {
+            return self.authenticode_vmlinuz();
+        }
+
+        self.image.authentihash(lief::pe::Algorithms::SHA_256)
+    }
+
+    fn authenticode_vmlinuz(&self) -> Vec<u8> {
+        if let Some(signature) = self.signatures().next() {
+            return signature.content_info().digest();
+        }
+        vec![]
     }
 
     fn long_section_name(&self, mut name: String) -> String {
