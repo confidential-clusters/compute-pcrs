@@ -11,12 +11,12 @@ pub struct PeFile {
 }
 
 impl PeFile {
-    pub fn load_from_file(path: &str, vmlinuz: bool) -> PeFile {
-        PeFile {
-            image: lief::pe::Binary::parse(path).unwrap(),
+    pub fn load_from_file(path: &str, vmlinuz: bool) -> Option<PeFile> {
+        Some(PeFile {
+            image: lief::pe::Binary::parse(path)?,
             path: path.into(),
             vmlinuz,
-        }
+        })
     }
 
     pub fn image(&self) -> &lief::pe::Binary {
@@ -32,7 +32,7 @@ impl PeFile {
     }
 
     fn authenticode_vmlinuz(&self) -> Vec<u8> {
-        for signature in self.signatures() {
+        if let Some(signature) = self.signatures().next() {
             return signature.content_info().digest();
         }
         vec![]

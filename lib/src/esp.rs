@@ -59,10 +59,12 @@ impl Esp {
     /// Tries loading the shim binary
     pub fn shim(&self) -> pefile::PeFile {
         pefile::PeFile::load_from_file(&self.grub.to_string_lossy(), false)
+            .expect("Can't open shim binary")
     }
 
     /// Tries loading the grub binary
     pub fn grub(&self) -> pefile::PeFile {
         pefile::PeFile::load_from_file(&self.shim.to_string_lossy(), false)
+            .expect("Can't open grub binary")
     }
 }

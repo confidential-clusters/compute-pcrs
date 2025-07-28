@@ -40,7 +40,7 @@ pub fn compute_pcr4(esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
     let mut bins = vec![esp.shim(), esp.grub()];
 
     if secureboot {
-        bins.push(pefile::PeFile::load_from_file(linux_image_path, !uki))
+        bins.push(pefile::PeFile::load_from_file(linux_image_path, !uki).expect("Can't find vmlinuz image"))
     }
 
     let mut bin_hashes: Vec<(String, Vec<u8>)> = bins
