@@ -85,7 +85,10 @@ enum Command {
     /// Compute PCR 7
     Pcr7 {},
     /// Compute PCR 11
-    Pcr11 {},
+    Pcr11 {
+        /// Path to a UKI
+        uki: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -141,8 +144,8 @@ fn main() -> Result<()> {
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
-        Command::Pcr11 {} => {
-            let pcr = compute_pcr11();
+        Command::Pcr11 { uki } => {
+            let pcr = compute_pcr11(uki);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
