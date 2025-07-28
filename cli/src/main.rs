@@ -1,7 +1,7 @@
 use std::result::Result::Ok;
 
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
@@ -22,6 +22,13 @@ struct Cli {
     command: Command,
 }
 
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+struct SecureBootVarStores {
+    #[arg(long, help = "Path to the directory storing EFIVar files")]
+    efivars: Option<String>,
+}
+
 #[derive(Subcommand, Debug)]
 enum Command {
     /// Compute all possible PCR values from the binaries available in the current environment. Meant to be run inside a Bootable Container.
@@ -40,6 +47,8 @@ enum Command {
             help = "Path to the ESP directory"
         )]
         esp: String,
+        #[command(flatten)]
+        secureboot_variables: SecureBootVarStores,
         #[arg(
             long,
             default_value_t = false,
@@ -83,7 +92,23 @@ enum Command {
         no_secureboot: bool,
     },
     /// Compute PCR 7
-    Pcr7 {},
+    Pcr7 {
+        #[arg(
+            long,
+            short,
+            default_value = "/usr/lib/bootupd/updates/",
+            help = "Path to the ESP directory"
+        )]
+        esp: String,
+        #[command(flatten)]
+        secureboot_variables: SecureBootVarStores,
+        #[arg(
+            long = "secureboot-disabled",
+            default_value_t = false,
+            help = "Compute PCRs as if secure boot was disabled in the system"
+        )]
+        no_secureboot: bool,
+    },
     /// Compute PCR 11
     Pcr11 {
         /// Path to a UKI
@@ -115,12 +140,13 @@ fn main() -> Result<()> {
         Command::All {
             kernels,
             esp,
+            secureboot_variables,
             uki,
             no_secureboot,
         } => {
             let pcrs = vec![
                 compute_pcr4(kernels, esp, *uki, !no_secureboot),
-                /* compute_pcr7(), */
+                compute_pcr7(secureboot_variables.efivars.as_deref(), esp, !no_secureboot),
                 /* compute_pcr11(), */
             ];
             println!(
@@ -139,8 +165,12 @@ fn main() -> Result<()> {
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
-        Command::Pcr7 {} => {
-            let pcr = compute_pcr7();
+        Command::Pcr7 {
+            esp,
+            secureboot_variables,
+            no_secureboot,
+        } => {
+            let pcr = compute_pcr7(secureboot_variables.efivars.as_deref(), esp, !no_secureboot);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
