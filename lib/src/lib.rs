@@ -13,16 +13,16 @@ pub mod shim;
 pub mod uefi;
 
 #[derive(Serialize, Deserialize)]
-struct Part {
-    name: String,
-    hash: String,
+pub struct Part {
+    pub name: String,
+    pub hash: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Pcr {
-    id: u64,
-    value: String,
-    parts: Vec<Part>,
+    pub id: u64,
+    pub value: String,
+    pub parts: Vec<Part>,
 }
 
 pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
@@ -75,11 +75,10 @@ pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bo
     }
 }
 
-pub fn compute_pcr11() -> Pcr {
+pub fn compute_pcr11(uki: &str) -> Pcr {
     let sections: Vec<&str> = vec![".linux", ".osrel", ".cmdline", ".initrd", ".uname", ".sbat"];
 
-    let uki = "a9ea995b29cda6783b676e2ec2666d8813882b604625389428ece4eee074e742.efi";
-    let pe: lief::pe::Binary = lief::pe::Binary::parse(&format!("./test/{uki}")).unwrap();
+    let pe: lief::pe::Binary = lief::pe::Binary::parse(uki).unwrap();
     let mut hashes: Vec<(String, Vec<u8>)> = vec![];
     sections.iter().for_each(|s| {
         let section = pe.section_by_name(s).unwrap();
