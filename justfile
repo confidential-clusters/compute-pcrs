@@ -8,10 +8,11 @@ test-container: prepare-test-env get-reference-values
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/target/debug/:/var/srv \
+        -v $PWD/test-data/:/var/srv/test-data \
         {{image}} \
-        /var/srv/compute-pcrs all \
+        /var/srv/compute-pcrs all --efivars /var/srv/test-data/efivars/qemu-ovmf/fcos-42 \
         > test/result.json 2>/dev/null
-    diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr4.json test/result.json || (echo "FAILED" && exit 1)
+    diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/all-pcrs.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
 get-reference-values:
@@ -65,3 +66,24 @@ test-uki: prepare-test-env-local
     # set -x
     cargo run -- pcr11 uki
 
+test-secureboot-enabled: prepare-test-env-local
+    #!/bin/bash
+    set -euo pipefail
+    cargo run -- pcr7 \
+        -e test-data \
+        --efivars test-data/efivars/qemu-ovmf/fcos-42 \
+        > test/result.json 2>/dev/null
+    diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr7-sb-enabled.json test/result.json || (echo "FAILED" && exit 1)
+    echo "OK"
+
+test-secureboot-disabled: prepare-test-env-local
+    #!/bin/bash
+    set -euo pipefail
+    mkdir -p test-data/efivars/qemu-ovmf/fcos-42-sb-disabled
+    cargo run -- pcr7 \
+        -e test-data \
+        --efivars test-data/efivars/qemu-ovmf/fcos-42-sb-disabled \
+        --secureboot-disabled \
+        > test/result.json 2>/dev/null
+    diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr7-sb-disabled.json test/result.json || (echo "FAILED" && exit 1)
+    echo "OK"
