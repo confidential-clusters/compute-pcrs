@@ -10,8 +10,10 @@ test-container: prepare-test-env get-reference-values
         -v $PWD/target/debug/:/var/srv \
         -v $PWD/test-data/:/var/srv/test-data \
         {{image}} \
-        /var/srv/compute-pcrs all --efivars /var/srv/test-data/efivars/qemu-ovmf/fcos-42 \
-        > test/result.json 2>/dev/null
+        /var/srv/compute-pcrs all \
+            --efivars /var/srv/test-data/efivars/qemu-ovmf/fcos-42 \
+            --mok-variables /var/srv/test-data/mok-variables/fcos-42 \
+            > test/result.json 2>/dev/null
     diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/all-pcrs.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
@@ -86,4 +88,13 @@ test-secureboot-disabled: prepare-test-env-local
         --secureboot-disabled \
         > test/result.json 2>/dev/null
     diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr7-sb-disabled.json test/result.json || (echo "FAILED" && exit 1)
+    echo "OK"
+
+test-default-mok-keys-fcos42: prepare-test-env-local
+    #!/bin/bash
+    set -euo pipefail
+    cargo run -- pcr14 \
+        --mok-variables test-data/mok-variables/fcos-42 \
+        > test/result.json 2>/dev/null
+    diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr14.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
