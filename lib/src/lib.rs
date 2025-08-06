@@ -130,18 +130,16 @@ pub fn compute_pcr11(uki: &str) -> Pcr {
 /// EFI vars can be loaded from
 ///     - efivars
 ///
-pub fn compute_pcr7() -> Pcr {
-    // TODO: parametrize secureboot_enabled boolean
-    let secureboot_enabled: bool = true;
-    // TODO: parametrize path
-    let efivars_path = "test/efivars/qemu-ovmf/fcos-42";
-    // TODO: parametrize path
-    let esp = esp::Esp::new("./test/ESP/fcos42/").unwrap();
+pub fn compute_pcr7(efivars_path: Option<&str>, esp_path: &str, secureboot_enabled: bool) -> Pcr {
+    let esp = esp::Esp::new(esp_path).unwrap();
     let mut hashes: Vec<(String, Vec<u8>)> = vec![(
         "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
         uefi::get_secureboot_state_event(secureboot_enabled).hash(),
     )];
-    let sb_var_loader = EFIVarsLoader::new(efivars_path, SECURE_BOOT_ATTR_HEADER_LENGTH);
+    let sb_var_loader = EFIVarsLoader::new(
+        efivars_path.expect("No efivars directory path provided"),
+        SECURE_BOOT_ATTR_HEADER_LENGTH,
+    );
 
     // Extend PCR7 with events for PK, KEK, db and dbx
     hashes.extend(collect_secure_boot_hashes(sb_var_loader.clone()));

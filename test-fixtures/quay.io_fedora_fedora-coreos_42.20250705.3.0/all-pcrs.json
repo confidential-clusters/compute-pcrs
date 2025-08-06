@@ -1,0 +1,72 @@
+{
+  "pcrs": [
+    {
+      "id": 4,
+      "value": "551bbd142a716c67cd78336593c2eb3b547b575e810ced4501d761082b5cd4a8",
+      "parts": [
+        {
+          "name": "EV_EFI_ACTION",
+          "hash": "3d6772b4f84ed47595d72a2c4c5ffd15f5bb72c7507fe26f2aaee2c69d5633ba"
+        },
+        {
+          "name": "EV_SEPARATOR",
+          "hash": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+        },
+        {
+          "name": "EV_EFI_BOOT_SERVICES_APPLICATION",
+          "hash": "94896c17d49fc8c8df0cc2836611586edab1615ce7cb58cf13fc5798de56b367"
+        },
+        {
+          "name": "EV_EFI_BOOT_SERVICES_APPLICATION",
+          "hash": "bc6844fc7b59b4f0c7da70a307fc578465411d7a2c34b0f4dc2cc154c873b644"
+        },
+        {
+          "name": "EV_EFI_BOOT_SERVICES_APPLICATION",
+          "hash": "2b1dc59bc61dbbc3db11a6f3b0708c948efd46cceb7f6c8ea2024b8d1b8c829a"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "value": "b3a56a06c03a65277d0a787fcabc1e293eaa5d6dd79398f2dda741f7b874c65d",
+      "parts": [
+        {
+          "name": "EV_EFI_VARIABLE_DRIVER_CONFIG",
+          "hash": "ccfc4bb32888a345bc8aeadaba552b627d99348c767681ab3141f5b01e40a40e"
+        },
+        {
+          "name": "EV_EFI_VARIABLE_DRIVER_CONFIG",
+          "hash": "adb6fc232943e39c374bf4782b6c697f43c39fca1f4b51dfceda21164e19a893"
+        },
+        {
+          "name": "EV_EFI_VARIABLE_DRIVER_CONFIG",
+          "hash": "b5432fe20c624811cb0296391bfdf948ebd02f0705ab8229bea09774023f0ebf"
+        },
+        {
+          "name": "EV_EFI_VARIABLE_DRIVER_CONFIG",
+          "hash": "4313e43de720194a0eabf4d6415d42b5a03a34fdc47bb1fc924cc4e665e6893d"
+        },
+        {
+          "name": "EV_EFI_VARIABLE_DRIVER_CONFIG",
+          "hash": "001004ba58a184f09be6c1f4ec75a246cc2eefa9637b48ee428b6aa9bce48c55"
+        },
+        {
+          "name": "EV_SEPARATOR",
+          "hash": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+        },
+        {
+          "name": "EV_EFI_VARIABLE_AUTHORITY",
+          "hash": "4d4a8e2c74133bbdc01a16eaf2dbb5d575afeb36f5d8dfcf609ae043909e2ee9"
+        },
+        {
+          "name": "EV_EFI_VARIABLE_AUTHORITY",
+          "hash": "e8e9578f5951ef16b1c1aa18ef02944b8375ec45ed4b5d8cdb30428db4a31016"
+        },
+        {
+          "name": "EV_EFI_VARIABLE_AUTHORITY",
+          "hash": "ad5901fd581e6640c742c488083b9ac2c48255bd28a16c106c6f9df52702ee3f"
+        }
+      ]
+    }
+  ]
+}
