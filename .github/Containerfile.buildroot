@@ -8,5 +8,6 @@ RUN dnf install -y \
         jq \
         just \
         openssl-devel \
+        podman \
     && \
     dnf clean all
