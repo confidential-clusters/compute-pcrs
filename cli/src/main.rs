@@ -61,6 +61,12 @@ enum Command {
             help = "Compute PCRs as if secure boot was disabled in the system"
         )]
         no_secureboot: bool,
+        #[arg(
+            long = "mok-variables",
+            required = true,
+            help = "Path to directory storing MokListRT, MokListTrustedRT and MokListXRT"
+        )]
+        mok_variables: String,
     },
     /// Compute PCR 4
     Pcr4 {
@@ -114,6 +120,15 @@ enum Command {
         /// Path to a UKI
         uki: String,
     },
+    /// Compute PCR 14
+    Pcr14 {
+        #[arg(
+            long = "mok-variables",
+            required = true,
+            help = "Path to directory storing MokListRT, MokListTrustedRT and MokListXRT"
+        )]
+        mok_variables: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -143,11 +158,13 @@ fn main() -> Result<()> {
             secureboot_variables,
             uki,
             no_secureboot,
+            mok_variables,
         } => {
             let pcrs = vec![
                 compute_pcr4(kernels, esp, *uki, !no_secureboot),
                 compute_pcr7(secureboot_variables.efivars.as_deref(), esp, !no_secureboot),
                 /* compute_pcr11(), */
+                compute_pcr14(mok_variables),
             ];
             println!(
                 "{}",
@@ -176,6 +193,11 @@ fn main() -> Result<()> {
         }
         Command::Pcr11 { uki } => {
             let pcr = compute_pcr11(uki);
+            println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
+            Ok(())
+        }
+        Command::Pcr14 { mok_variables } => {
+            let pcr = compute_pcr14(mok_variables);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
