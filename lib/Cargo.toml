@@ -9,11 +9,11 @@ rust-version = "1.85.0"
 
 [dependencies]
 lief = "0.16.6"
-anyhow = "1.0.97"
+anyhow = "1.0.99"
 hex = "0.4.3"
 hex-literal = "1.0.0"
 sha2 = "0.10.9"
 serde = { version = "1.0.219", features = ["derive"] }
-uuid = "1.17.0"
+uuid = "1.18.0"
 openssl = "0.10.73"
-glob = "0.3.2"
+glob = "0.3.3"
