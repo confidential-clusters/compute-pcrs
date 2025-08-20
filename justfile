@@ -1,10 +1,13 @@
 image := "quay.io/fedora/fedora-coreos:42.20250705.3.0"
 
-test-container: prepare-test-env get-reference-values
+build:
     #!/bin/bash
     set -euo pipefail
-    # set -x
     cargo build
+
+test-container: prepare-test-env get-reference-values build
+    #!/bin/bash
+    set -euo pipefail
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/target/debug/:/var/srv \
