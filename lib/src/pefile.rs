@@ -117,7 +117,7 @@ impl PeFile {
         vec![]
     }
 
-    pub fn signatures(&self) -> lief::pe::signature::Signatures {
+    pub fn signatures(&self) -> lief::pe::signature::Signatures<'_> {
         self.image.signatures()
     }
 
