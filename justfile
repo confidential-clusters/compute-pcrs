@@ -1,4 +1,12 @@
 image := "quay.io/fedora/fedora-coreos:42.20250705.3.0"
+container_image_name := "compute-pcrs"
+
+build-container:
+    #!/bin/bash
+    set -euo pipefail
+    podman build . \
+        --security-opt label=disable \
+        -t {{container_image_name}}
 
 test-container: prepare-test-env get-reference-values
     #!/bin/bash
