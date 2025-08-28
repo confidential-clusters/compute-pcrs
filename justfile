@@ -3,8 +3,19 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-image := "quay.io/fedora/fedora-coreos:42.20250705.3.0"
+image := "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/42.20250705.3.0/x86_64/fedora-coreos-42.20250705.3.0-ostree.x86_64.ociarchive"
+target_container_ociarchive_path := absolute_path(join("/tmp", file_name(image)))
+target_container_name := without_extension(file_name(image))
 container_image_name := "compute-pcrs"
+
+pull-target-container-image:
+    #!/bin/bash
+    set -euo pipefail
+    if ! podman image exists {{target_container_name}}; then
+        curl --skip-existing -o {{target_container_ociarchive_path}} {{image}}
+        image_id=$(podman load -i {{target_container_ociarchive_path}} 2>/dev/null | awk -F ':' '{print $NF}')
+        podman tag $image_id {{target_container_name}}
+    fi
 
 build-container:
     #!/bin/bash
@@ -14,15 +25,14 @@ build-container:
         --security-opt label=disable \
         -t {{container_image_name}}
 
-test-container: prepare-test-env get-reference-values build-container
+test-container: prepare-test-env get-reference-values build-container pull-target-container-image
     #!/bin/bash
     set -euo pipefail
     # set -x
-    podman pull {{image}}
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
-        --mount=type=image,source={{image}},destination=/var/srv/image,rw=false \
+        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
         {{container_image_name}} \
         compute-pcrs all \
             --kernels /var/srv/image/usr/lib/modules \
@@ -77,6 +87,8 @@ clean-tests:
     set -euo pipefail
     # set -x
     rm -rf test-data test
+    podman image rm {{target_container_name}}
+    rm {{target_container_ociarchive_path}}
 
 test-vmlinuz: prepare-test-env-local
     #!/bin/bash
