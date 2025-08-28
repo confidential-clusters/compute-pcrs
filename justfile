@@ -2,6 +2,7 @@ image := "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/42.
 target_container_ociarchive_path := absolute_path(join("/tmp", file_name(image)))
 target_container_name := without_extension(file_name(image))
 container_image_name := "compute-pcrs"
+skip_build := "false"
 
 pull-target-container-image:
     #!/bin/bash
@@ -13,9 +14,11 @@ pull-target-container-image:
 build-container:
     #!/bin/bash
     set -euo pipefail
-    podman build . \
-        --security-opt label=disable \
-        -t {{container_image_name}}
+    if ! podman image exists {{container_image_name}} || [ "{{skip_build}}" = "false" ]; then
+        podman build . \
+            --security-opt label=disable \
+            -t {{container_image_name}}
+    fi;
 
 test-container: prepare-test-env get-reference-values build-container pull-target-container-image
     #!/bin/bash
