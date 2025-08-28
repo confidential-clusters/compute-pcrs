@@ -28,7 +28,7 @@ build-container:
             -t {{container_image_name}}
     fi;
 
-test-container: prepare-test-env get-reference-values build-container pull-target-container-image
+test-container: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
@@ -83,7 +83,7 @@ prepare-test-env:
     # set -x
     mkdir -p test
 
-prepare-test-env-local: get-reference-values prepare-test-env get-test-data
+prepare-test-deps: get-reference-values prepare-test-env build-container pull-target-container-image
 
 clean-tests:
     #!/bin/bash
@@ -93,48 +93,75 @@ clean-tests:
     podman image rm {{target_container_name}}
     rm {{target_container_ociarchive_path}}
 
-test-vmlinuz: prepare-test-env-local
+test-vmlinuz: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    cargo run -- pcr4 -k test-data -e test-data
+    podman run --rm \
+        --security-opt label=disable \
+        -v $PWD/test-data/:/var/srv/test-data \
+        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        {{container_image_name}} \
+        compute-pcrs pcr4 \
+            --kernels /var/srv/image/usr/lib/modules \
+            --esp /var/srv/image/usr/lib/bootupd/updates
 
-test-uki: prepare-test-env-local
+test-uki: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    cargo run -- pcr11 uki
+    podman run --rm \
+        --security-opt label=disable \
+        -v $PWD/test-data/:/var/srv/test-data \
+        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        {{container_image_name}} \
+        compute-pcrs pcr11 uki \
 
-test-secureboot-enabled: prepare-test-env-local
+test-secureboot-enabled: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    cargo run -- pcr7 \
-        -e test-data \
-        --efivars test-data/efivars/qemu-ovmf/fedora-42 \
-        > test/result.json 2>/dev/null
+    podman run --rm \
+        --security-opt label=disable \
+        -v $PWD/test-data/:/var/srv/test-data \
+        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        {{container_image_name}} \
+        compute-pcrs pcr7 \
+            --esp /var/srv/image/usr/lib/bootupd/updates \
+            --efivars /var/srv/test-data/efivars/qemu-ovmf/fedora-42 \
+            > test/result.json 2>/dev/null
     diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr7-sb-enabled.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
-test-secureboot-disabled: prepare-test-env-local
+test-secureboot-disabled: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
     mkdir -p test-data/efivars/qemu-ovmf/fedora-42-sb-disabled
-    cargo run -- pcr7 \
-        -e test-data \
-        --efivars test-data/efivars/qemu-ovmf/fedora-42-sb-disabled \
-        --secureboot-disabled \
-        > test/result.json 2>/dev/null
+    podman run --rm \
+        --security-opt label=disable \
+        -v $PWD/test-data/:/var/srv/test-data \
+        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        {{container_image_name}} \
+        compute-pcrs pcr7 \
+            --esp /var/srv/image/usr/lib/bootupd/updates \
+            --efivars /var/srv/test-data/efivars/qemu-ovmf/fedora-42-sb-disabled \
+            --secureboot-disabled \
+            > test/result.json 2>/dev/null
     diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr7-sb-disabled.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
-test-default-mok-keys-fcos42: prepare-test-env-local
+test-default-mok-keys-fcos42: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    cargo run -- pcr14 \
-        --mok-variables test-data/mok-variables/fedora-42 \
-        > test/result.json 2>/dev/null
+    podman run --rm \
+        --security-opt label=disable \
+        -v $PWD/test-data/:/var/srv/test-data \
+        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        {{container_image_name}} \
+        compute-pcrs pcr14 \
+            --mok-variables /var/srv/test-data/mok-variables/fedora-42 \
+            > test/result.json 2>/dev/null
     diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr14.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
