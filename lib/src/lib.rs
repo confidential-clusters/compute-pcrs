@@ -13,13 +13,13 @@ pub mod pefile;
 pub mod shim;
 pub mod uefi;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Part {
     pub name: String,
     pub hash: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Pcr {
     pub id: u64,
     pub value: String,
