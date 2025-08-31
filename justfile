@@ -1,16 +1,25 @@
 image := "quay.io/fedora/fedora-coreos:42.20250705.3.0"
+container_image_name := "compute-pcrs"
 
-test-container: prepare-test-env get-reference-values
+build-container:
     #!/bin/bash
     set -euo pipefail
-    # set -x
-    cargo build
+    podman build . \
+        --security-opt label=disable \
+        -t {{container_image_name}}
+
+test-container: prepare-test-env get-reference-values build-container
+    #!/bin/bash
+    set -euo pipefail
+    podman pull {{image}}
     podman run --rm \
         --security-opt label=disable \
-        -v $PWD/target/debug/:/var/srv \
         -v $PWD/test-data/:/var/srv/test-data \
-        {{image}} \
-        /var/srv/compute-pcrs all \
+        --mount=type=image,source={{image}},destination=/var/srv/image,rw=false \
+        {{container_image_name}} \
+        compute-pcrs all \
+            --kernels /var/srv/image/usr/lib/modules \
+            --esp /var/srv/image/usr/lib/bootupd/updates \
             --efivars /var/srv/test-data/efivars/qemu-ovmf/fcos-42 \
             --mok-variables /var/srv/test-data/mok-variables/fcos-42 \
             > test/result.json 2>/dev/null
