@@ -131,7 +131,7 @@ test-secureboot-disabled: prepare-test-deps
     diff test-fixtures/quay.io_fedora_fedora-coreos_42.20250705.3.0/pcr7-sb-disabled.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
-test-default-mok-keys-fcos42: prepare-test-deps
+test-default-mok-keys: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
