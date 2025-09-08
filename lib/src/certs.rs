@@ -60,6 +60,8 @@ fn entry_to_string(entry: &openssl::x509::X509NameEntryRef) -> Option<String> {
         return Some(format!("CN={data_str}"));
     } else if object == "organizationalUnitName" {
         return Some(format!("OU={data_str}"));
+    } else if object == "emailAddress" {
+        return Some(format!("emailAddress={data_str}"));
     }
     None
 }
