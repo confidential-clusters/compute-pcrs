@@ -2,6 +2,7 @@ image := "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/42.
 target_container_ociarchive_path := absolute_path(join("/tmp", file_name(image)))
 target_container_name := without_extension(file_name(image))
 target_container_osinfo_path := "/tmp/compute-pcrs-osinfo"
+target_container_mount_point := "/var/srv/image"
 container_image_name := "compute-pcrs"
 skip_build := "false"
 
@@ -41,11 +42,11 @@ test-container: prepare-test-deps
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
-        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs all \
-            --kernels /var/srv/image/usr/lib/modules \
-            --esp /var/srv/image/usr/lib/bootupd/updates \
+            --kernels {{target_container_mount_point}}/usr/lib/modules \
+            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates \
             --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID} \
             --mok-variables /var/srv/test-data/mok-variables/${ID}-${VERSION_ID} \
             > test/result.json 2>/dev/null
@@ -80,11 +81,11 @@ test-vmlinuz: prepare-test-deps
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
-        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr4 \
-            --kernels /var/srv/image/usr/lib/modules \
-            --esp /var/srv/image/usr/lib/bootupd/updates
+            --kernels {{target_container_mount_point}}/usr/lib/modules \
+            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates
 
 test-uki: prepare-test-deps
     #!/bin/bash
@@ -92,7 +93,7 @@ test-uki: prepare-test-deps
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
-        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr11 uki \
 
@@ -104,10 +105,10 @@ test-secureboot-enabled: prepare-test-deps
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
-        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr7 \
-            --esp /var/srv/image/usr/lib/bootupd/updates \
+            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates \
             --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID} \
             > test/result.json 2>/dev/null
     diff test-fixtures/${ID}-${OSTREE_VERSION}/pcr7-sb-enabled.json test/result.json || (echo "FAILED" && exit 1)
@@ -122,10 +123,10 @@ test-secureboot-disabled: prepare-test-deps
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
-        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr7 \
-            --esp /var/srv/image/usr/lib/bootupd/updates \
+            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates \
             --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID}-sb-disabled \
             --secureboot-disabled \
             > test/result.json 2>/dev/null
@@ -140,7 +141,7 @@ test-default-mok-keys: prepare-test-deps
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
-        --mount=type=image,source={{target_container_name}},destination=/var/srv/image,rw=false \
+        --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr14 \
             --mok-variables /var/srv/test-data/mok-variables/${ID}-${VERSION_ID} \
