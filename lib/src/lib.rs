@@ -10,6 +10,7 @@ mod esp;
 mod linux;
 mod mok;
 pub mod pefile;
+mod rootfs;
 pub mod shim;
 pub mod uefi;
 
@@ -26,8 +27,8 @@ pub struct Pcr {
     pub parts: Vec<Part>,
 }
 
-pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
-    let esp = esp::Esp::new(esp_path).unwrap();
+pub fn compute_pcr4(rootfs_path: &str, uki: bool, secureboot: bool) -> Pcr {
+    let rootfs = rootfs::RootFSTree::new(rootfs_path).unwrap();
 
     let ev_efi_action_hash: Vec<u8> =
         Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();
@@ -37,10 +38,10 @@ pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bo
     hashes.push(("EV_EFI_ACTION".into(), ev_efi_action_hash));
     hashes.push(("EV_SEPARATOR".into(), ev_separator_hash));
 
-    let mut bins = vec![esp.shim(), esp.grub()];
+    let mut bins = vec![rootfs.shim(), rootfs.grub()];
 
     if secureboot && !uki {
-        bins.push(linux::load_vmlinuz(kernels_dir).unwrap())
+        bins.push(rootfs.vmlinuz().unwrap())
     }
     // TODO: write condition for uki and implement logic
 
@@ -131,8 +132,12 @@ pub fn compute_pcr11(uki: &str) -> Pcr {
 /// EFI vars can be loaded from
 ///     - efivars
 ///
-pub fn compute_pcr7(efivars_path: Option<&str>, esp_path: &str, secureboot_enabled: bool) -> Pcr {
-    let esp = esp::Esp::new(esp_path).unwrap();
+pub fn compute_pcr7(
+    efivars_path: Option<&str>,
+    rootfs_path: &str,
+    secureboot_enabled: bool,
+) -> Pcr {
+    let rootfs = rootfs::RootFSTree::new(rootfs_path).unwrap();
     let mut hashes: Vec<(String, Vec<u8>)> = vec![(
         "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
         uefi::get_secureboot_state_event(secureboot_enabled).hash(),
@@ -150,7 +155,7 @@ pub fn compute_pcr7(efivars_path: Option<&str>, esp_path: &str, secureboot_enabl
         Sha256::digest(hex::decode("00000000").unwrap()).to_vec(),
     ));
 
-    let shim_bin = esp.shim();
+    let shim_bin = rootfs.shim();
     let sb_db = sb_var_loader.secureboot_db();
     let sb_db_certs = crate::certs::get_db_certs(&sb_db).unwrap();
     if secureboot_enabled {
@@ -180,7 +185,7 @@ pub fn compute_pcr7(efivars_path: Option<&str>, esp_path: &str, secureboot_enabl
         let shim_vendor_cert = shim_bin.vendor_cert();
         let shim_vendor_db = shim_bin.vendor_db();
         // In the case of UKI, the UKI and UKI addons should be processed
-        let binaries = vec![esp.grub()];
+        let binaries = vec![rootfs.grub()];
         for bin in binaries {
             // look for cert in secureboot
             if let Some(sb_cert) = bin.find_cert_in_db(&sb_db_certs) {
