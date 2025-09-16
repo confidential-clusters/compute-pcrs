@@ -9,6 +9,7 @@ container_image_name := "compute-pcrs"
 build-container:
     #!/bin/bash
     set -euo pipefail
+    # set -x
     podman build . \
         --security-opt label=disable \
         -t {{container_image_name}}
@@ -16,6 +17,7 @@ build-container:
 test-container: prepare-test-env get-reference-values build-container
     #!/bin/bash
     set -euo pipefail
+    # set -x
     podman pull {{image}}
     podman run --rm \
         --security-opt label=disable \
@@ -33,9 +35,13 @@ test-container: prepare-test-env get-reference-values build-container
 
 get-reference-values:
     #!/bin/bash
+    # set -x
     set -euo pipefail
     if [ ! -d test-data ]; then
         git clone git@github.com:confidential-clusters/reference-values.git test-data
+    else
+        cd test-data
+        git pull --ff-only
     fi
 
 get-test-data:
@@ -61,6 +67,7 @@ get-test-data:
 prepare-test-env:
     #!/bin/bash
     set -euo pipefail
+    # set -x
     mkdir -p test
 
 prepare-test-env-local: get-reference-values prepare-test-env get-test-data
@@ -68,6 +75,7 @@ prepare-test-env-local: get-reference-values prepare-test-env get-test-data
 clean-tests:
     #!/bin/bash
     set -euo pipefail
+    # set -x
     rm -rf test-data test
 
 test-vmlinuz: prepare-test-env-local
@@ -85,6 +93,7 @@ test-uki: prepare-test-env-local
 test-secureboot-enabled: prepare-test-env-local
     #!/bin/bash
     set -euo pipefail
+    # set -x
     cargo run -- pcr7 \
         -e test-data \
         --efivars test-data/efivars/qemu-ovmf/fedora-42 \
@@ -95,6 +104,7 @@ test-secureboot-enabled: prepare-test-env-local
 test-secureboot-disabled: prepare-test-env-local
     #!/bin/bash
     set -euo pipefail
+    # set -x
     mkdir -p test-data/efivars/qemu-ovmf/fedora-42-sb-disabled
     cargo run -- pcr7 \
         -e test-data \
@@ -107,6 +117,7 @@ test-secureboot-disabled: prepare-test-env-local
 test-default-mok-keys-fcos42: prepare-test-env-local
     #!/bin/bash
     set -euo pipefail
+    # set -x
     cargo run -- pcr14 \
         --mok-variables test-data/mok-variables/fedora-42 \
         > test/result.json 2>/dev/null
