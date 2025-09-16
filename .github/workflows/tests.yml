@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 name: "Tests"
 on:
   pull_request:

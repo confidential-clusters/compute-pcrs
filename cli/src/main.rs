@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: Timothée Ravier <tim@siosm.fr>
+// SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
+//
+// SPDX-License-Identifier: MIT
+
 use std::result::Result::Ok;
 
 use anyhow::Result;

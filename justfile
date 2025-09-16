@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: Timothée Ravier <tim@siosm.fr>
+# SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 image := "quay.io/fedora/fedora-coreos:42.20250705.3.0"
 container_image_name := "compute-pcrs"
 

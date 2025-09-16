@@ -1,0 +1,13 @@
+version = 1
+
+[[annotations]]
+path = [
+  "README.md",
+  "Cargo.lock",
+  "test-fixtures/**"
+]
+SPDX-FileCopyrightText = [
+    "Timothée Ravier <tim@siosm.fr>",
+    "Beñat Gartzia Arruabarrena <bgartzia@redhat.com>"
+]
+SPDX-License-Identifier = "CC0-1.0"
