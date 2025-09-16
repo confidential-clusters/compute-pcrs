@@ -16,8 +16,8 @@ default-run = "compute-pcrs"
 [dependencies]
 compute-pcrs-lib = { version = "*", path = "../lib" }
 anyhow = "1.0.99"
-clap = { version = "4.5.46", features = ["derive"] }
+clap = { version = "4.5.47", features = ["derive"] }
 env_logger = "0.11.8"
-log = "0.4.27"
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.143"
+log = "0.4.28"
+serde = { version = "1.0.225", features = ["derive"] }
+serde_json = "1.0.145"
