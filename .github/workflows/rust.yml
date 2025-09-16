@@ -21,7 +21,7 @@ jobs:
   tests-stable:
     name: "Tests, stable toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -38,7 +38,7 @@ jobs:
   tests-release-stable:
     name: "Tests (release), stable toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -55,7 +55,7 @@ jobs:
   tests-release-msrv:
     name: "Tests (release), minimum supported toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -78,7 +78,7 @@ jobs:
   linting:
     name: "Lints, pinned toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -96,7 +96,7 @@ jobs:
   tests-other-channels:
     name: "Tests, unstable toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     continue-on-error: true
     strategy:
       matrix:
@@ -118,7 +118,7 @@ jobs:
     name: "Integration Tests, just"
     runs-on: "ubuntu-24.04"
     container:
-      image: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+      image: "ghcr.io/confidential-clusters/buildroot:latest"
       options: "--privileged"
     steps:
       - name: "Check out repository"

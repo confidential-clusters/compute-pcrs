@@ -1,4 +1,4 @@
-FROM ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest AS builder
+FROM ghcr.io/confidential-clusters/buildroot:latest AS builder
 WORKDIR /usr/src/compute-pcrs
 COPY . .
 RUN cargo build
