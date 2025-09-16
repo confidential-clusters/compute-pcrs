@@ -1,4 +1,9 @@
+# SPDX-FileCopyrightText: Timothée Ravier <tim@siosm.fr>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # Inspired by https://github.com/coreos/repo-templates
+
 name: "Rust"
 on:
   pull_request:
@@ -21,7 +26,7 @@ jobs:
   tests-stable:
     name: "Tests, stable toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -38,7 +43,7 @@ jobs:
   tests-release-stable:
     name: "Tests (release), stable toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -55,7 +60,7 @@ jobs:
   tests-release-msrv:
     name: "Tests (release), minimum supported toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -78,7 +83,7 @@ jobs:
   linting:
     name: "Lints, pinned toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -96,7 +101,7 @@ jobs:
   tests-other-channels:
     name: "Tests, unstable toolchain"
     runs-on: "ubuntu-24.04"
-    container: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
+    container: "ghcr.io/confidential-clusters/buildroot:latest"
     continue-on-error: true
     strategy:
       matrix:
@@ -114,25 +119,3 @@ jobs:
         run: cargo build --all-targets
       - name: "cargo test"
         run: cargo test --all-targets
-  tests-integration-just-stable:
-    name: "Integration Tests, just"
-    runs-on: "ubuntu-24.04"
-    container:
-      image: "ghcr.io/confidential-clusters/compute-pcrs/buildroot:latest"
-      options: "--privileged"
-    steps:
-      - name: "Check out repository"
-        uses: actions/checkout@v5
-      - name: "Clone reference-values"
-        uses: actions/checkout@v5
-        with:
-          repository: confidential-clusters/reference-values
-          path: test-data
-      - name: "Install toolchain"
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: stable
-      - name: "Cache build artifacts"
-        uses: Swatinem/rust-cache@v2
-      - name: "Run just tests"
-        run: just -v $(just -l | grep -E "^ *test-.*$" | grep -v uki)

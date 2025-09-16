@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: Timothée Ravier <tim@siosm.fr>
+// SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
+//
+// SPDX-License-Identifier: MIT
+
 use crate::uefi::{EFI_CERT_TYPE_X509_GUID, guid_to_le_bytes};
 use std::fmt;
 

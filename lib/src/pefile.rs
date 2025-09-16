@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: Timothée Ravier <tim@siosm.fr>
+// SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
+//
+// SPDX-License-Identifier: MIT
+
 use lief::generic::Section;
 use std::fs::File;
 use std::os::unix::fs::FileExt;

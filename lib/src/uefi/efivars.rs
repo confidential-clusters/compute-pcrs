@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: Timothée Ravier <tim@siosm.fr>
+// SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
+//
+// SPDX-License-Identifier: MIT
+
 use super::{GUID_GLOBAL_VARIABLE, GUID_SECURITY_DATABASE, UEFIVariableData};
 use crate::uefi::secureboot;
 use std::fs;

@@ -1,3 +1,9 @@
+// SPDX-FileCopyrightText: Timothée Ravier <tim@siosm.fr>
+// SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
+// SPDX-FileCopyrightText: Jakob Naucke <jnaucke@redhat.com>
+//
+// SPDX-License-Identifier: MIT
+
 use crate::uefi::efivars::{EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH};
 use crate::uefi::secureboot::{SecureBootdbLoader, collect_secure_boot_hashes};
 use lief::generic::Section;
