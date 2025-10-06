@@ -16,6 +16,7 @@ mod esp;
 mod linux;
 mod mok;
 pub mod pefile;
+pub mod rootfs;
 pub mod shim;
 pub mod uefi;
 
