@@ -16,6 +16,7 @@ pull-target-container-image:
     if ! podman image exists {{target_container_name}}; then
         curl --skip-existing -o {{target_container_ociarchive_path}} {{image}}
         image_id=$(podman load -i {{target_container_ociarchive_path}} 2>/dev/null | awk -F ':' '{print $NF}')
+        rm {{target_container_ociarchive_path}}
         podman tag $image_id {{target_container_name}}
     fi
 
@@ -44,7 +45,7 @@ test-container: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     podman run --rm \
         --security-opt label=disable \
@@ -85,7 +86,6 @@ clean-tests:
     # set -x
     rm -rf test-data test
     podman image rm {{target_container_name}}
-    rm {{target_container_ociarchive_path}}
     rm {{target_container_osinfo_path}}
 
 test-vmlinuz: prepare-test-deps
@@ -116,7 +116,7 @@ test-secureboot-enabled: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     podman run --rm \
         --security-opt label=disable \
@@ -134,7 +134,7 @@ test-secureboot-disabled: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     mkdir -p test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID}-sb-disabled
     podman run --rm \
@@ -154,7 +154,7 @@ test-default-mok-keys: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     podman run --rm \
         --security-opt label=disable \
