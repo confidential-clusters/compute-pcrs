@@ -45,7 +45,7 @@ test-container: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     podman run --rm \
         --security-opt label=disable \
@@ -116,7 +116,7 @@ test-secureboot-enabled: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     podman run --rm \
         --security-opt label=disable \
@@ -134,7 +134,7 @@ test-secureboot-disabled: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     mkdir -p test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID}-sb-disabled
     podman run --rm \
@@ -154,7 +154,7 @@ test-default-mok-keys: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
-    # It reveals the ID, VERSION_ID and OSTREE_VERSION environment variables
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
     podman run --rm \
         --security-opt label=disable \
