@@ -16,6 +16,7 @@ pull-target-container-image:
     if ! podman image exists {{target_container_name}}; then
         curl --skip-existing -o {{target_container_ociarchive_path}} {{image}}
         image_id=$(podman load -i {{target_container_ociarchive_path}} 2>/dev/null | awk -F ':' '{print $NF}')
+        rm {{target_container_ociarchive_path}}
         podman tag $image_id {{target_container_name}}
     fi
 
@@ -85,7 +86,6 @@ clean-tests:
     # set -x
     rm -rf test-data test
     podman image rm {{target_container_name}}
-    rm {{target_container_ociarchive_path}}
     rm {{target_container_osinfo_path}}
 
 test-vmlinuz: prepare-test-deps
