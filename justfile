@@ -53,8 +53,7 @@ test-container: prepare-test-deps
         --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs all \
-            --kernels {{target_container_mount_point}}/usr/lib/modules \
-            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates \
+            --rootfs {{target_container_mount_point}} \
             --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID} \
             --mok-variables /var/srv/test-data/mok-variables/${ID}-${VERSION_ID} \
             > test/result.json 2>/dev/null
@@ -99,8 +98,7 @@ test-vmlinuz: prepare-test-deps
         --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr4 \
-            --kernels {{target_container_mount_point}}/usr/lib/modules \
-            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates
+            --rootfs {{target_container_mount_point}} \
 
 test-uki: prepare-test-deps
     #!/bin/bash
@@ -125,7 +123,7 @@ test-secureboot-enabled: prepare-test-deps
         --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr7 \
-            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates \
+            --rootfs {{target_container_mount_point}} \
             --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID} \
             > test/result.json 2>/dev/null
     diff test-fixtures/${ID}-${OSTREE_VERSION}/pcr7-sb-enabled.json test/result.json || (echo "FAILED" && exit 1)
@@ -144,7 +142,7 @@ test-secureboot-disabled: prepare-test-deps
         --mount=type=image,source={{target_container_name}},destination={{target_container_mount_point}},rw=false \
         {{container_image_name}} \
         compute-pcrs pcr7 \
-            --esp {{target_container_mount_point}}/usr/lib/bootupd/updates \
+            --rootfs {{target_container_mount_point}} \
             --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID}-sb-disabled \
             --secureboot-disabled \
             > test/result.json 2>/dev/null
