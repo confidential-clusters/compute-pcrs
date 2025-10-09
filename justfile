@@ -30,6 +30,24 @@ extract-info-target-container-image: pull-target-container-image
         cat /etc/os-release \
     > {{target_container_osinfo_path}}
 
+run container *args:
+    #!/bin/bash
+    set -euo pipefail
+    cargo build --release
+    set -x
+    podman run --rm -ti \
+        --security-opt label=disable \
+        --mount=type=image,source={{container}},destination=/var/srv/image,rw=false \
+        -v $PWD/target/release/compute-pcrs:/usr/bin/compute-pcrs \
+        -v $PWD/test-data/:/var/srv/test-data \
+        -v $PWD/systemd-bootx64.efi:/var/srv/image/usr/lib/bootupd/updates/EFI/fedora/grubx64.efi \
+        fedora:latest \
+        compute-pcrs pcr4 \
+            --shim /var/srv/image/usr/lib/bootupd/updates/EFI/fedora/shimx64.efi \
+            --bootloader /var/srv/image/usr/lib/bootupd/updates/EFI/fedora/grubx64.efi \
+            --uki /var/srv/image/boot/EFI/Linux/6.15.10-200.fc42.x86_64.efi \
+            --uki-addon /var/srv/image/boot/EFI/Linux/6.15.10-200.fc42.x86_64.efi.extra.d/ignition.addon.efi
+
 build-container:
     #!/bin/bash
     set -euo pipefail
