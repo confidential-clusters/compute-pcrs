@@ -32,6 +32,14 @@ jobs:
         target-image-url:
           - "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/42.20250705.3.0/x86_64/fedora-coreos-42.20250705.3.0-ostree.x86_64.ociarchive"
           - "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.19/4.19.0/rhcos-4.19.0-x86_64-ostree.x86_64.ociarchive"
+        test-finder:
+          - grep -E "^ *test-.*$" | grep -v uki
+        host-platform:
+          - qemu-ovmf/fedora-42
+        include:
+          - target-image-url: https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/42.20250705.3.0/x86_64/fedora-coreos-42.20250705.3.0-ostree.x86_64.ociarchive
+            host-platform: azure/20251013
+            test-finder: grep -E "^ *test-.*$" | grep -v uki | grep -v test-secureboot-disabled
     steps:
       - name: "Check out repository"
         uses: actions/checkout@v5
@@ -47,4 +55,8 @@ jobs:
       - name: "Cache build artifacts"
         uses: Swatinem/rust-cache@v2
       - name: "Run just tests"
-        run: just --set image ${{ matrix.target-image-url }} -v $(just -l | grep -E "^ *test-.*$" | grep -v uki)
+        run: |
+          just -v \
+            --set image ${{ matrix.target-image-url }} \
+            --set host_platform ${{ matrix.host-platform }} \
+              $(just -l | ${{ matrix.test-finder }})
