@@ -93,6 +93,8 @@ test-vmlinuz: prepare-test-deps
     #!/bin/bash
     set -euo pipefail
     # set -x
+    # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
+    source {{target_container_osinfo_path}}
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
@@ -100,6 +102,9 @@ test-vmlinuz: prepare-test-deps
         {{container_image_name}} \
         compute-pcrs pcr4 \
             --rootfs {{target_container_mount_point}} \
+            > test/result.json 2>/dev/null
+    diff test-fixtures/{{host_platform}}/${ID}-${OSTREE_VERSION}/pcr4.json test/result.json || (echo "FAILED" && exit 1)
+    echo "OK"
 
 test-uki: prepare-test-deps
     #!/bin/bash
