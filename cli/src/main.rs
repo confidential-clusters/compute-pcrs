@@ -41,17 +41,10 @@ enum Command {
         #[arg(
             long,
             short,
-            default_value = "/usr/lib/modules/",
-            help = "Path to the kernel modules directory. This helps finding the vmlinuz image"
+            default_value = "/",
+            help = "Path to the target container image root filesystem"
         )]
-        kernels: String,
-        #[arg(
-            long,
-            short,
-            default_value = "/usr/lib/bootupd/updates/",
-            help = "Path to the ESP directory"
-        )]
-        esp: String,
+        rootfs: String,
         #[command(flatten)]
         secureboot_variables: SecureBootVarStores,
         #[arg(
@@ -78,17 +71,10 @@ enum Command {
         #[arg(
             long,
             short,
-            default_value = "/usr/lib/modules/",
-            help = "Path to the kernel modules directory. This helps finding the vmlinuz image"
+            default_value = "/",
+            help = "Path to the target container image root filesystem"
         )]
-        kernels: String,
-        #[arg(
-            long,
-            short,
-            default_value = "/usr/lib/bootupd/updates/",
-            help = "Path to the ESP directory"
-        )]
-        esp: String,
+        rootfs: String,
         #[arg(
             long,
             default_value_t = false,
@@ -107,10 +93,10 @@ enum Command {
         #[arg(
             long,
             short,
-            default_value = "/usr/lib/bootupd/updates/",
-            help = "Path to the ESP directory"
+            default_value = "/",
+            help = "Path to the target container image root filesystem"
         )]
-        esp: String,
+        rootfs: String,
         #[command(flatten)]
         secureboot_variables: SecureBootVarStores,
         #[arg(
@@ -158,16 +144,20 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Command::All {
-            kernels,
-            esp,
+            rootfs,
             secureboot_variables,
             uki,
             no_secureboot,
             mok_variables,
         } => {
+            let rfs = rootfs::RootFSTree::new(rootfs).unwrap();
             let pcrs = vec![
-                compute_pcr4(kernels, esp, *uki, !no_secureboot),
-                compute_pcr7(secureboot_variables.efivars.as_deref(), esp, !no_secureboot),
+                compute_pcr4(rfs.vmlinuz(), rfs.esp(), *uki, !no_secureboot),
+                compute_pcr7(
+                    secureboot_variables.efivars.as_deref(),
+                    rfs.esp(),
+                    !no_secureboot,
+                ),
                 /* compute_pcr11(), */
                 compute_pcr14(mok_variables),
             ];
@@ -178,21 +168,26 @@ fn main() -> Result<()> {
             Ok(())
         }
         Command::Pcr4 {
-            kernels,
-            esp,
+            rootfs,
             uki,
             no_secureboot,
         } => {
-            let pcr = compute_pcr4(kernels, esp, *uki, !no_secureboot);
+            let rfs = rootfs::RootFSTree::new(rootfs).unwrap();
+            let pcr = compute_pcr4(rfs.vmlinuz(), rfs.esp(), *uki, !no_secureboot);
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }
         Command::Pcr7 {
-            esp,
+            rootfs,
             secureboot_variables,
             no_secureboot,
         } => {
-            let pcr = compute_pcr7(secureboot_variables.efivars.as_deref(), esp, !no_secureboot);
+            let rfs = rootfs::RootFSTree::new(rootfs).unwrap();
+            let pcr = compute_pcr7(
+                secureboot_variables.efivars.as_deref(),
+                rfs.esp(),
+                !no_secureboot,
+            );
             println!("{}", serde_json::to_string_pretty(&pcr).unwrap());
             Ok(())
         }

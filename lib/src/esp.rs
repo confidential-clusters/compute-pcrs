@@ -56,20 +56,20 @@ impl Esp {
         let esp_vendor_path = esp_vendor_path(&path_pb)?;
 
         Ok(Esp {
-            grub: bin_path_from_esp_vendor(&esp_vendor_path, "shimx64.efi")?,
-            shim: bin_path_from_esp_vendor(&esp_vendor_path, "grubx64.efi")?,
+            grub: bin_path_from_esp_vendor(&esp_vendor_path, "grubx64.efi")?,
+            shim: bin_path_from_esp_vendor(&esp_vendor_path, "shimx64.efi")?,
         })
     }
 
     /// Tries loading the shim binary
     pub fn shim(&self) -> pefile::PeFile {
-        pefile::PeFile::load_from_file(&self.grub.to_string_lossy(), false)
+        pefile::PeFile::load_from_file(&self.shim.to_string_lossy(), false)
             .expect("Can't open shim binary")
     }
 
     /// Tries loading the grub binary
     pub fn grub(&self) -> pefile::PeFile {
-        pefile::PeFile::load_from_file(&self.shim.to_string_lossy(), false)
+        pefile::PeFile::load_from_file(&self.grub.to_string_lossy(), false)
             .expect("Can't open grub binary")
     }
 }
