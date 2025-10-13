@@ -8,6 +8,7 @@ target_container_ociarchive_path := absolute_path(join("/tmp", file_name(image))
 target_container_name := without_extension(file_name(image))
 target_container_osinfo_path := "/tmp/compute-pcrs-osinfo"
 target_container_mount_point := "/var/srv/image"
+host_platform := "qemu-ovmf/fedora-42"
 container_image_name := "compute-pcrs"
 skip_build := "false"
 
@@ -55,10 +56,10 @@ test-container: prepare-test-deps
         {{container_image_name}} \
         compute-pcrs all \
             --rootfs {{target_container_mount_point}} \
-            --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID} \
+            --efivars /var/srv/test-data/efivars/{{host_platform}} \
             --mok-variables /var/srv/test-data/mok-variables/${ID}-${VERSION_ID} \
             > test/result.json 2>/dev/null
-    diff test-fixtures/${ID}-${OSTREE_VERSION}/all-pcrs.json test/result.json || (echo "FAILED" && exit 1)
+    diff test-fixtures/{{host_platform}}/${ID}-${OSTREE_VERSION}/all-pcrs.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
 get-reference-values:
@@ -124,9 +125,9 @@ test-secureboot-enabled: prepare-test-deps
         {{container_image_name}} \
         compute-pcrs pcr7 \
             --rootfs {{target_container_mount_point}} \
-            --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID} \
+            --efivars /var/srv/test-data/efivars/{{host_platform}} \
             > test/result.json 2>/dev/null
-    diff test-fixtures/${ID}-${OSTREE_VERSION}/pcr7-sb-enabled.json test/result.json || (echo "FAILED" && exit 1)
+    diff test-fixtures/{{host_platform}}/${ID}-${OSTREE_VERSION}/pcr7-sb-enabled.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
 test-secureboot-disabled: prepare-test-deps
@@ -135,7 +136,7 @@ test-secureboot-disabled: prepare-test-deps
     # set -x
     # It retrieves the ID, VERSION_ID and OSTREE_VERSION environment variables
     source {{target_container_osinfo_path}}
-    mkdir -p test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID}-sb-disabled
+    mkdir -p test-data/efivars/{{host_platform}}-sb-disabled
     podman run --rm \
         --security-opt label=disable \
         -v $PWD/test-data/:/var/srv/test-data \
@@ -143,10 +144,10 @@ test-secureboot-disabled: prepare-test-deps
         {{container_image_name}} \
         compute-pcrs pcr7 \
             --rootfs {{target_container_mount_point}} \
-            --efivars /var/srv/test-data/efivars/qemu-ovmf/${ID}-${VERSION_ID}-sb-disabled \
+            --efivars /var/srv/test-data/efivars/{{host_platform}}-sb-disabled \
             --secureboot-disabled \
             > test/result.json 2>/dev/null
-    diff test-fixtures/${ID}-${OSTREE_VERSION}/pcr7-sb-disabled.json test/result.json || (echo "FAILED" && exit 1)
+    diff test-fixtures/{{host_platform}}/${ID}-${OSTREE_VERSION}/pcr7-sb-disabled.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
 
 test-default-mok-keys: prepare-test-deps
@@ -163,5 +164,5 @@ test-default-mok-keys: prepare-test-deps
         compute-pcrs pcr14 \
             --mok-variables /var/srv/test-data/mok-variables/${ID}-${VERSION_ID} \
             > test/result.json 2>/dev/null
-    diff test-fixtures/${ID}-${OSTREE_VERSION}/pcr14.json test/result.json || (echo "FAILED" && exit 1)
+    diff test-fixtures/{{host_platform}}/${ID}-${OSTREE_VERSION}/pcr14.json test/result.json || (echo "FAILED" && exit 1)
     echo "OK"
