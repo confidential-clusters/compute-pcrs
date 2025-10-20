@@ -36,7 +36,7 @@ struct SecureBootVarStores {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// Compute all possible PCR values from the binaries available in the current environment. Meant to be run inside a Bootable Container.
+    /// Compute all possible PCR values from the binaries available in the current environment
     All {
         #[arg(
             long,
