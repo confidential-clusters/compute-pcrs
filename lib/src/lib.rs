@@ -8,6 +8,7 @@ use crate::uefi::efivars::{EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH};
 use crate::uefi::secureboot::{SecureBootdbLoader, collect_secure_boot_hashes};
 use lief::generic::Section;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 
@@ -20,16 +21,20 @@ pub mod rootfs;
 pub mod shim;
 pub mod uefi;
 
+#[serde_as]
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Part {
     pub name: String,
-    pub hash: String,
+    #[serde_as(as = "serde_with::hex::Hex")]
+    pub hash: Vec<u8>,
 }
 
+#[serde_as]
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Pcr {
     pub id: u64,
-    pub value: String,
+    #[serde_as(as = "serde_with::hex::Hex")]
+    pub value: Vec<u8>,
     pub parts: Vec<Part>,
 }
 
@@ -72,12 +77,12 @@ pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bo
 
     Pcr {
         id: 4,
-        value: hex::encode(result),
+        value: result,
         parts: hashes
             .iter()
             .map(|(p, h)| Part {
                 name: p.to_string(),
-                hash: hex::encode(h),
+                hash: h.to_vec(),
             })
             .collect(),
     }
@@ -111,12 +116,12 @@ pub fn compute_pcr11(uki: &str) -> Pcr {
 
     Pcr {
         id: 11,
-        value: hex::encode(result),
+        value: result,
         parts: hashes
             .iter()
             .map(|(s, h)| Part {
                 name: s.into(),
-                hash: hex::encode(h),
+                hash: h.to_vec(),
             })
             .collect(),
     }
@@ -245,12 +250,12 @@ pub fn compute_pcr7(efivars_path: Option<&str>, esp_path: &str, secureboot_enabl
 
     Pcr {
         id: 7,
-        value: hex::encode(result),
+        value: result,
         parts: hashes
             .iter()
             .map(|(s, h)| Part {
                 name: s.into(),
-                hash: hex::encode(h),
+                hash: h.to_vec(),
             })
             .collect(),
     }
@@ -274,12 +279,12 @@ pub fn compute_pcr14(mok_variables: &str) -> Pcr {
 
     Pcr {
         id: 14,
-        value: hex::encode(result),
+        value: result,
         parts: elems
             .iter()
             .map(|(e, h)| Part {
                 name: e.clone(),
-                hash: hex::encode(h),
+                hash: h.to_vec(),
             })
             .collect(),
     }
