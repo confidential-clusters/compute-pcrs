@@ -20,6 +20,7 @@ pub mod pcrs;
 pub mod pefile;
 pub mod rootfs;
 pub mod shim;
+pub mod tpmevents;
 pub mod uefi;
 
 pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
