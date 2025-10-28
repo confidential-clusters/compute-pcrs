@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use super::*;
+use crate::tpmevents::{TPMEvent, TPMEventID, TPMEventMixModel};
 
 #[test]
 fn test_part_serialization() {
@@ -60,4 +61,84 @@ fn test_pcr_deserialization() {
     ).unwrap();
 
     assert_eq!(deserialized, expected);
+}
+
+#[test]
+fn test_part_from_tpmevent() {
+    let input = TPMEvent {
+        name: "FOOBAR".into(),
+        pcr: 255,
+        hash: vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+        mix: TPMEventMixModel {
+            event: TPMEventID::Pcr4EfiCall,
+            group: u32::MAX,
+        },
+    };
+    let expected = Part {
+        name: "FOOBAR".into(),
+        hash: vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+    };
+
+    let res: Part = (&input).into();
+
+    assert_eq!(res, expected);
+}
+
+#[test]
+fn test_pcr_compilation_from_tpmevents() {
+    let input = vec![
+        TPMEvent {
+            name: "FOOBAR".into(),
+            pcr: 255,
+            hash: vec![
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ],
+            mix: TPMEventMixModel {
+                event: TPMEventID::Pcr4EfiCall,
+                group: u32::MAX,
+            },
+        },
+        TPMEvent {
+            name: "BARFOO".into(),
+            pcr: 255,
+            hash: vec![
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1,
+            ],
+            // Having a pcr7 event here does not make sense if the previous one
+            // was pcr4, but mix should be sane at this point in the execution
+            mix: TPMEventMixModel {
+                event: TPMEventID::Pcr7SecureBoot,
+                group: u32::MAX,
+            },
+        },
+    ];
+    let expected = Pcr {
+        id: 255,
+        value: vec![
+            65, 62, 10, 52, 9, 169, 42, 229, 47, 108, 155, 208, 62, 239, 192, 64, 254, 216, 40,
+            213, 49, 150, 204, 191, 240, 146, 157, 233, 235, 71, 46, 91,
+        ],
+        parts: vec![
+            Part {
+                name: "FOOBAR".into(),
+                hash: vec![
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0,
+                ],
+            },
+            Part {
+                name: "BARFOO".into(),
+                hash: vec![
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 1,
+                ],
+            },
+        ],
+    };
+
+    let res = Pcr::compile_from(&input);
+
+    assert_eq!(res, expected);
 }
