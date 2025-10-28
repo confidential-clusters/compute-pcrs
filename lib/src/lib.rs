@@ -7,36 +7,20 @@
 use crate::uefi::efivars::{EFIVarsLoader, SECURE_BOOT_ATTR_HEADER_LENGTH};
 use crate::uefi::secureboot::{SecureBootdbLoader, collect_secure_boot_hashes};
 use lief::generic::Section;
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
+
+pub use pcrs::{Part, Pcr};
 
 pub mod certs;
 mod esp;
 mod linux;
 mod mok;
+pub mod pcrs;
 pub mod pefile;
 pub mod rootfs;
 pub mod shim;
 pub mod uefi;
-
-#[serde_as]
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Part {
-    pub name: String,
-    #[serde_as(as = "serde_with::hex::Hex")]
-    pub hash: Vec<u8>,
-}
-
-#[serde_as]
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Pcr {
-    pub id: u64,
-    #[serde_as(as = "serde_with::hex::Hex")]
-    pub value: Vec<u8>,
-    pub parts: Vec<Part>,
-}
 
 pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
     let esp = esp::Esp::new(esp_path).unwrap();

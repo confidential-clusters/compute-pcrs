@@ -23,3 +23,6 @@ uuid = "1.18.1"
 openssl = "0.10.74"
 glob = "0.3.3"
 serde_with = { version = "3.15.1", features = ["hex"] }
+
+[dev-dependencies]
+serde_json = "1.0.145"
