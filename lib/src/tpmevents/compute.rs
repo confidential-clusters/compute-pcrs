@@ -14,7 +14,6 @@ use crate::tpmevents;
 use crate::tpmevents::TPMEvent;
 use crate::uefi;
 use crate::uefi::efivars;
-use crate::uefi::secureboot::SecureBootdbLoader;
 
 const EV_SEPARATOR_HASH: [u8; 32] = [
     223, 63, 97, 152, 4, 169, 47, 219, 64, 87, 25, 45, 196, 61, 215, 72, 234, 119, 138, 220, 82,
