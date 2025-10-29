@@ -3,9 +3,6 @@
 // SPDX-FileCopyrightText: Jakob Naucke <jnaucke@redhat.com>
 //
 // SPDX-License-Identifier: MIT
-
-use sha2::{Digest, Sha256};
-
 pub use pcrs::{Part, Pcr};
 
 pub mod certs;
@@ -55,30 +52,5 @@ pub fn compute_pcr7(efivars_path: Option<&str>, esp_path: &str, secureboot_enabl
 }
 
 pub fn compute_pcr14(mok_variables: &str) -> Pcr {
-    let mok_event_loader = mok::MokEventHashes::new(mok_variables);
-
-    let elems: Vec<(String, Vec<u8>)> = mok_event_loader.map(|h| ("EV_IPL".into(), h)).collect();
-
-    let mut result =
-        hex::decode("0000000000000000000000000000000000000000000000000000000000000000")
-            .unwrap()
-            .to_vec();
-    for (_, h) in &elems {
-        let mut hasher = Sha256::new();
-        hasher.update(result);
-        hasher.update(h);
-        result = hasher.finalize().to_vec();
-    }
-
-    Pcr {
-        id: 14,
-        value: result,
-        parts: elems
-            .iter()
-            .map(|(e, h)| Part {
-                name: e.clone(),
-                hash: h.to_vec(),
-            })
-            .collect(),
-    }
+    Pcr::compile_from(&tpmevents::compute::pcr14_events(mok_variables))
 }
