@@ -13,7 +13,7 @@ pub const TPMEG_LINUX: u32 = 1 << 1; // Events depending on vmlinuz
 pub const TPMEG_BOOTLOADER: u32 = 1 << 2; // Events depending on shim or grub
 pub const TPMEG_SECUREBOOT: u32 = 1 << 3; // Events depending on secure boot variables
 pub const TPMEG_MOKVARS: u32 = 1 << 4; // Events depending on MOK variables
-// pub const TPMEG_UKI: u32 = 1 << 5;  // Events depending on UKI
+pub const TPMEG_UKI: u32 = 1 << 5; // Events depending on UKI
 pub const TPMEG_ALWAYS: u32 = u32::MAX; // Events that always change
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -34,6 +34,18 @@ pub enum TPMEventID {
     Pcr7GrubDbCert,
     Pcr7GrubVendorDbCert,
     Pcr7GrubMokListCert,
+    Pcr11Linux,
+    Pcr11LinuxContent,
+    Pcr11Osrel,
+    Pcr11OsrelContent,
+    Pcr11Cmdline,
+    Pcr11CmdlineContent,
+    Pcr11Initrd,
+    Pcr11InitrdContent,
+    Pcr11Uname,
+    Pcr11UnameContent,
+    Pcr11Sbat,
+    Pcr11SbatContent,
     Pcr14MokList,
     Pcr14MokListX,
     Pcr14MokListTrusted,
@@ -109,6 +121,54 @@ pub const PCR7_GRUBVENDORDBCERT: TPMEventMixModel = TPMEventMixModel {
 pub const PCR7_GRUBMOKLISTCERT: TPMEventMixModel = TPMEventMixModel {
     event: TPMEventID::Pcr7GrubMokListCert,
     group: TPMEG_SECUREBOOT | TPMEG_BOOTLOADER | TPMEG_MOKVARS,
+};
+pub const PCR11_LINUX: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11Linux,
+    group: TPMEG_UKI,
+};
+pub const PCR11_LINUX_CONTENT: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11LinuxContent,
+    group: TPMEG_UKI,
+};
+pub const PCR11_OSREL: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11Osrel,
+    group: TPMEG_UKI,
+};
+pub const PCR11_OSREL_CONTENT: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11OsrelContent,
+    group: TPMEG_UKI,
+};
+pub const PCR11_CMDLINE: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11Cmdline,
+    group: TPMEG_UKI,
+};
+pub const PCR11_CMDLINE_CONTENT: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11CmdlineContent,
+    group: TPMEG_UKI,
+};
+pub const PCR11_INITRD: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11Initrd,
+    group: TPMEG_UKI,
+};
+pub const PCR11_INITRD_CONTENT: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11InitrdContent,
+    group: TPMEG_UKI,
+};
+pub const PCR11_UNAME: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11Uname,
+    group: TPMEG_UKI,
+};
+pub const PCR11_UNAME_CONTENT: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11UnameContent,
+    group: TPMEG_UKI,
+};
+pub const PCR11_SBAT: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11Sbat,
+    group: TPMEG_UKI,
+};
+pub const PCR11_SBAT_CONTENT: TPMEventMixModel = TPMEventMixModel {
+    event: TPMEventID::Pcr11SbatContent,
+    group: TPMEG_UKI,
 };
 pub const PCR14_MOKLIST: TPMEventMixModel = TPMEventMixModel {
     event: TPMEventID::Pcr14MokList,
