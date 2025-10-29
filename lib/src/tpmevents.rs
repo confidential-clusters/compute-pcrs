@@ -4,6 +4,8 @@
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
+pub mod compute;
+
 // Event group definitions
 pub const TPMEG_EMPTY: u32 = 0; // Empty to extend/compare
 pub const TPMEG_NEVER: u32 = 0; // No group, never changes
