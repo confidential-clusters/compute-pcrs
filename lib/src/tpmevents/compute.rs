@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Beñat Gartzia Arruabarrena <bgartzia@redhat.com>
 //
 // SPDX-License-Identifier: MIT
+use lief::generic::Section;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 
@@ -23,6 +24,22 @@ const MODELS_SB_VARIABLES: [tpmevents::TPMEventMixModel; 4] = [
     tpmevents::PCR7_KEK,
     tpmevents::PCR7_DB,
     tpmevents::PCR7_DBX,
+];
+const MODELS_UKI_SECTION_NAME: [tpmevents::TPMEventMixModel; 6] = [
+    tpmevents::PCR11_LINUX,
+    tpmevents::PCR11_OSREL,
+    tpmevents::PCR11_CMDLINE,
+    tpmevents::PCR11_INITRD,
+    tpmevents::PCR11_UNAME,
+    tpmevents::PCR11_SBAT,
+];
+const MODELS_UKI_SECTION_CONTENT: [tpmevents::TPMEventMixModel; 6] = [
+    tpmevents::PCR11_LINUX_CONTENT,
+    tpmevents::PCR11_OSREL_CONTENT,
+    tpmevents::PCR11_CMDLINE_CONTENT,
+    tpmevents::PCR11_INITRD_CONTENT,
+    tpmevents::PCR11_UNAME_CONTENT,
+    tpmevents::PCR11_SBAT_CONTENT,
 ];
 
 pub fn pcr4_events(
@@ -214,3 +231,36 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
 
     events
 }
+
+pub fn pcr11_events(uki: &str) -> Vec<TPMEvent> {
+    let n_pcr = 11;
+    let sections: Vec<&str> = vec![".linux", ".osrel", ".cmdline", ".initrd", ".uname", ".sbat"];
+    let pe: lief::pe::Binary = lief::pe::Binary::parse(uki).unwrap();
+    let mut events: Vec<TPMEvent> = vec![];
+
+    sections
+        .iter()
+        .zip(MODELS_UKI_SECTION_NAME)
+        .zip(MODELS_UKI_SECTION_CONTENT)
+        .for_each(|((s, nm), cm)| {
+            let section = pe.section_by_name(s).unwrap();
+            events.push(TPMEvent {
+                name: (*s).into(),
+                pcr: n_pcr,
+                hash: Sha256::digest(format!("{s}\0")).to_vec(),
+                mix: nm,
+            });
+            events.push(TPMEvent {
+                name: format!("{}_CONTENT", *s),
+                pcr: n_pcr,
+                hash: Sha256::digest(section.content()).to_vec(),
+                mix: cm,
+            });
+        });
+
+    events
+}
+//
+// pub fn compute_pcr14_events() ->  {
+//
+// }
