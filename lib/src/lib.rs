@@ -24,53 +24,8 @@ pub mod tpmevents;
 pub mod uefi;
 
 pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bool) -> Pcr {
-    let esp = esp::Esp::new(esp_path).unwrap();
-
-    let ev_efi_action_hash: Vec<u8> =
-        Sha256::digest(b"Calling EFI Application from Boot Option").to_vec();
-    let ev_separator_hash: Vec<u8> = Sha256::digest(hex::decode("00000000").unwrap()).to_vec();
-
-    let mut hashes: Vec<(String, Vec<u8>)> = vec![];
-    hashes.push(("EV_EFI_ACTION".into(), ev_efi_action_hash));
-    hashes.push(("EV_SEPARATOR".into(), ev_separator_hash));
-
-    let mut bins = vec![esp.shim(), esp.grub()];
-
-    if secureboot && !uki {
-        bins.push(linux::load_vmlinuz(kernels_dir).unwrap())
-    }
-    // TODO: write condition for uki and implement logic
-
-    let mut bin_hashes: Vec<(String, Vec<u8>)> = bins
-        .iter()
-        .map(|b| ("EV_EFI_BOOT_SERVICES_APPLICATION".into(), b.authenticode()))
-        .collect();
-    hashes.append(&mut bin_hashes);
-
-    // Start with 0
-    let mut result =
-        hex::decode("0000000000000000000000000000000000000000000000000000000000000000")
-            .unwrap()
-            .to_vec();
-
-    for (_p, h) in &hashes {
-        let mut hasher = Sha256::new();
-        hasher.update(result);
-        hasher.update(h);
-        result = hasher.finalize().to_vec();
-    }
-
-    Pcr {
-        id: 4,
-        value: result,
-        parts: hashes
-            .iter()
-            .map(|(p, h)| Part {
-                name: p.to_string(),
-                hash: h.to_vec(),
-            })
-            .collect(),
-    }
+    let events = tpmevents::compute::pcr4_events(kernels_dir, esp_path, uki, secureboot);
+    Pcr::compile_from(&events)
 }
 
 pub fn compute_pcr11(uki: &str) -> Pcr {
