@@ -8,6 +8,7 @@ use std::collections::HashSet;
 
 use crate::esp;
 use crate::linux;
+use crate::mok;
 use crate::shim;
 use crate::tpmevents;
 use crate::tpmevents::TPMEvent;
@@ -40,6 +41,11 @@ const MODELS_UKI_SECTION_CONTENT: [tpmevents::TPMEventMixModel; 6] = [
     tpmevents::PCR11_INITRD_CONTENT,
     tpmevents::PCR11_UNAME_CONTENT,
     tpmevents::PCR11_SBAT_CONTENT,
+];
+const MODELS_MOKVARS: [tpmevents::TPMEventMixModel; 3] = [
+    tpmevents::PCR14_MOKLIST,
+    tpmevents::PCR14_MOKLISTX,
+    tpmevents::PCR14_MOKLISTTRUSTED,
 ];
 
 pub fn pcr4_events(
@@ -260,7 +266,16 @@ pub fn pcr11_events(uki: &str) -> Vec<TPMEvent> {
 
     events
 }
-//
-// pub fn compute_pcr14_events() ->  {
-//
-// }
+
+pub fn pcr14_events(mok_variables: &str) -> Vec<TPMEvent> {
+    let n_pcr = 14;
+    mok::MokEventHashes::new(mok_variables)
+        .zip(MODELS_MOKVARS)
+        .map(|(h, m)| TPMEvent {
+            name: "EV_IPL".into(),
+            pcr: n_pcr,
+            hash: h,
+            mix: m,
+        })
+        .collect()
+}
