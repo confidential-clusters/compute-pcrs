@@ -13,12 +13,12 @@ repository = "https://github.com/confidential-clusters/compute-pcrs"
 rust-version = "1.85.0"
 
 [dependencies]
-lief = "0.17.0"
+lief = "0.17.1"
 anyhow = "1.0.100"
 hex = "0.4.3"
 hex-literal = "1.0.0"
 sha2 = "0.10.9"
 serde = { version = "1.0.228", features = ["derive"] }
 uuid = "1.18.1"
-openssl = "0.10.73"
+openssl = "0.10.74"
 glob = "0.3.3"
