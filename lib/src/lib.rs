@@ -4,7 +4,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-use lief::generic::Section;
 use sha2::{Digest, Sha256};
 
 pub use pcrs::{Part, Pcr};
@@ -26,42 +25,7 @@ pub fn compute_pcr4(kernels_dir: &str, esp_path: &str, uki: bool, secureboot: bo
 }
 
 pub fn compute_pcr11(uki: &str) -> Pcr {
-    let sections: Vec<&str> = vec![".linux", ".osrel", ".cmdline", ".initrd", ".uname", ".sbat"];
-
-    let pe: lief::pe::Binary = lief::pe::Binary::parse(uki).unwrap();
-    let mut hashes: Vec<(String, Vec<u8>)> = vec![];
-    sections.iter().for_each(|s| {
-        let section = pe.section_by_name(s).unwrap();
-        hashes.push(((*s).into(), Sha256::digest(format!("{s}\0")).to_vec()));
-        hashes.push(((*s).into(), Sha256::digest(section.content()).to_vec()));
-    });
-
-    // Start with 0
-    let mut result =
-        hex::decode("0000000000000000000000000000000000000000000000000000000000000000")
-            .unwrap()
-            .to_vec();
-
-    for (_s, h) in &hashes {
-        let mut hasher = Sha256::new();
-        hasher.update(result);
-        hasher.update(h);
-        result = hasher.finalize().to_vec();
-    }
-
-    // println!("{}", hex::encode(&result));
-
-    Pcr {
-        id: 11,
-        value: result,
-        parts: hashes
-            .iter()
-            .map(|(s, h)| Part {
-                name: s.into(),
-                hash: h.to_vec(),
-            })
-            .collect(),
-    }
+    Pcr::compile_from(&tpmevents::compute::pcr11_events(uki))
 }
 
 /// PCR 7 contains the digests of the variables defining the Secure Boot
