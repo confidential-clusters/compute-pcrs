@@ -7,7 +7,6 @@ use sha2::{Digest, Sha256};
 use uuid::{Uuid, uuid};
 
 pub mod efivars;
-pub mod secureboot;
 
 pub const GUID_GLOBAL_VARIABLE: Uuid = uuid!("8be4df61-93ca-11d2-aa0d-00e098032b8c");
 pub const GUID_SECURITY_DATABASE: Uuid = uuid!("d719b2cb-3d3a-4596-a3bc-dad00e67656f");
