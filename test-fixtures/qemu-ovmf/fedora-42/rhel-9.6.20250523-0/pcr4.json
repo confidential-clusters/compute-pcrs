@@ -1,0 +1,26 @@
+{
+  "id": 4,
+  "value": "a311d30bce007305eff35ebf7a0902d16d52b3180c84c25c291de1ccde434a44",
+  "parts": [
+    {
+      "name": "EV_EFI_ACTION",
+      "hash": "3d6772b4f84ed47595d72a2c4c5ffd15f5bb72c7507fe26f2aaee2c69d5633ba"
+    },
+    {
+      "name": "EV_SEPARATOR",
+      "hash": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+    },
+    {
+      "name": "EV_EFI_BOOT_SERVICES_APPLICATION",
+      "hash": "27b12463e599b3147635f272e3722960e443def60fef088eba600697017529f2"
+    },
+    {
+      "name": "EV_EFI_BOOT_SERVICES_APPLICATION",
+      "hash": "71f09da2978dfd9b92150b6b96329e728a21c938e23f483fed8bd22789692ee6"
+    },
+    {
+      "name": "EV_EFI_BOOT_SERVICES_APPLICATION",
+      "hash": "6734ca524851211a14fa4a3c422a7c653e054606aa6c39c6d6c4f8f6207627ba"
+    }
+  ]
+}

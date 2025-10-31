@@ -1,0 +1,18 @@
+{
+  "id": 14,
+  "value": "17cdefd9548f4383b67a37a901673bf3c8ded6f619d36c8007562de1d93c81cc",
+  "parts": [
+    {
+      "name": "EV_IPL",
+      "hash": "e8e48e3ad10bc243341b4663c0057aef0ec7894ccc9ecb0598f0830fa57f7220"
+    },
+    {
+      "name": "EV_IPL",
+      "hash": "8d8a3aae50d5d25838c95c034aadce7b548c9a952eb7925e366eda537c59c3b0"
+    },
+    {
+      "name": "EV_IPL",
+      "hash": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+    }
+  ]
+}
