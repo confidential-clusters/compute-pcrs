@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use super::*;
-use crate::tpmevents::{TPMEvent, TPMEventID, TPMEventMixModel};
+use crate::tpmevents::{TPMEvent, TPMEventID};
 
 #[test]
 fn test_part_serialization() {
@@ -69,10 +69,7 @@ fn test_part_from_tpmevent() {
         name: "FOOBAR".into(),
         pcr: 255,
         hash: vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
-        mix: TPMEventMixModel {
-            event: TPMEventID::Pcr4EfiCall,
-            group: u32::MAX,
-        },
+        id: TPMEventID::Pcr4EfiCall,
     };
     let expected = Part {
         name: "FOOBAR".into(),
@@ -94,10 +91,7 @@ fn test_pcr_compilation_from_tpmevents() {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0,
             ],
-            mix: TPMEventMixModel {
-                event: TPMEventID::Pcr4EfiCall,
-                group: u32::MAX,
-            },
+            id: TPMEventID::Pcr4EfiCall,
         },
         TPMEvent {
             name: "BARFOO".into(),
@@ -107,11 +101,8 @@ fn test_pcr_compilation_from_tpmevents() {
                 0, 0, 0, 1,
             ],
             // Having a pcr7 event here does not make sense if the previous one
-            // was pcr4, but mix should be sane at this point in the execution
-            mix: TPMEventMixModel {
-                event: TPMEventID::Pcr7SecureBoot,
-                group: u32::MAX,
-            },
+            // was pcr4, but id should be sane at this point in the execution
+            id: TPMEventID::Pcr7SecureBoot,
         },
     ];
     let expected = Pcr {

@@ -10,8 +10,8 @@ use crate::esp;
 use crate::linux;
 use crate::mok;
 use crate::shim;
-use crate::tpmevents;
 use crate::tpmevents::TPMEvent;
+use crate::tpmevents::TPMEventID;
 use crate::uefi;
 use crate::uefi::efivars;
 
@@ -19,32 +19,32 @@ const EV_SEPARATOR_HASH: [u8; 32] = [
     223, 63, 97, 152, 4, 169, 47, 219, 64, 87, 25, 45, 196, 61, 215, 72, 234, 119, 138, 220, 82,
     188, 73, 140, 232, 5, 36, 192, 20, 184, 17, 25,
 ];
-const MODELS_SB_VARIABLES: [tpmevents::TPMEventMixModel; 4] = [
-    tpmevents::PCR7_PK,
-    tpmevents::PCR7_KEK,
-    tpmevents::PCR7_DB,
-    tpmevents::PCR7_DBX,
+const MODELS_SB_VARIABLES: [TPMEventID; 4] = [
+    TPMEventID::Pcr7Pk,
+    TPMEventID::Pcr7Kek,
+    TPMEventID::Pcr7Db,
+    TPMEventID::Pcr7Dbx,
 ];
-const MODELS_UKI_SECTION_NAME: [tpmevents::TPMEventMixModel; 6] = [
-    tpmevents::PCR11_LINUX,
-    tpmevents::PCR11_OSREL,
-    tpmevents::PCR11_CMDLINE,
-    tpmevents::PCR11_INITRD,
-    tpmevents::PCR11_UNAME,
-    tpmevents::PCR11_SBAT,
+const MODELS_UKI_SECTION_NAME: [TPMEventID; 6] = [
+    TPMEventID::Pcr11Linux,
+    TPMEventID::Pcr11Osrel,
+    TPMEventID::Pcr11Cmdline,
+    TPMEventID::Pcr11Initrd,
+    TPMEventID::Pcr11Uname,
+    TPMEventID::Pcr11Sbat,
 ];
-const MODELS_UKI_SECTION_CONTENT: [tpmevents::TPMEventMixModel; 6] = [
-    tpmevents::PCR11_LINUX_CONTENT,
-    tpmevents::PCR11_OSREL_CONTENT,
-    tpmevents::PCR11_CMDLINE_CONTENT,
-    tpmevents::PCR11_INITRD_CONTENT,
-    tpmevents::PCR11_UNAME_CONTENT,
-    tpmevents::PCR11_SBAT_CONTENT,
+const MODELS_UKI_SECTION_CONTENT: [TPMEventID; 6] = [
+    TPMEventID::Pcr11LinuxContent,
+    TPMEventID::Pcr11OsrelContent,
+    TPMEventID::Pcr11CmdlineContent,
+    TPMEventID::Pcr11InitrdContent,
+    TPMEventID::Pcr11UnameContent,
+    TPMEventID::Pcr11SbatContent,
 ];
-const MODELS_MOKVARS: [tpmevents::TPMEventMixModel; 3] = [
-    tpmevents::PCR14_MOKLIST,
-    tpmevents::PCR14_MOKLISTX,
-    tpmevents::PCR14_MOKLISTTRUSTED,
+const MODELS_MOKVARS: [TPMEventID; 3] = [
+    TPMEventID::Pcr14MokList,
+    TPMEventID::Pcr14MokListX,
+    TPMEventID::Pcr14MokListTrusted,
 ];
 
 pub fn pcr4_events(
@@ -62,7 +62,7 @@ pub fn pcr4_events(
         name: "EV_EFI_ACTION".into(),
         pcr: n_pcr,
         hash: Sha256::digest(b"Calling EFI Application from Boot Option").to_vec(),
-        mix: tpmevents::PCR4_EFICALL,
+        id: TPMEventID::Pcr4EfiCall,
     });
 
     // Separator
@@ -70,7 +70,7 @@ pub fn pcr4_events(
         name: "EV_SEPARATOR".into(),
         pcr: n_pcr,
         hash: EV_SEPARATOR_HASH.to_vec(),
-        mix: tpmevents::PCR4_SEPARATOR,
+        id: TPMEventID::Pcr4Separator,
     });
 
     // Binaries
@@ -78,14 +78,14 @@ pub fn pcr4_events(
         name: "EV_EFI_BOOT_SERVICES_APPLICATION".into(),
         pcr: n_pcr,
         hash: esp.shim().authenticode(),
-        mix: tpmevents::PCR4_SHIM,
+        id: TPMEventID::Pcr4Shim,
     });
 
     events.push(TPMEvent {
         name: "EV_EFI_BOOT_SERVICES_APPLICATION".into(),
         pcr: n_pcr,
         hash: esp.grub().authenticode(),
-        mix: tpmevents::PCR4_GRUB,
+        id: TPMEventID::Pcr4Grub,
     });
 
     if secureboot && !uki {
@@ -93,7 +93,7 @@ pub fn pcr4_events(
             name: "EV_EFI_BOOT_SERVICES_APPLICATION".into(),
             pcr: n_pcr,
             hash: linux::load_vmlinuz(kernels_dir).unwrap().authenticode(),
-            mix: tpmevents::PCR4_VMLINUZ,
+            id: TPMEventID::Pcr4Vmlinuz,
         });
     }
 
@@ -117,16 +117,16 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
         name: "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
         pcr: n_pcr,
         hash: uefi::get_secureboot_state_event(secureboot_enabled).hash(),
-        mix: tpmevents::PCR7_SECUREBOOT,
+        id: TPMEventID::Pcr7SecureBoot,
     });
 
     // Secure boot variables: PK, KEK, db, dbx
-    for (model, var) in MODELS_SB_VARIABLES.iter().zip(sb_var_loader) {
+    for (id, var) in MODELS_SB_VARIABLES.iter().zip(sb_var_loader) {
         events.push(TPMEvent {
             name: "EV_EFI_VARIABLE_DRIVER_CONFIG".into(),
             pcr: n_pcr,
             hash: var.hash(),
-            mix: model.clone(),
+            id: id.clone(),
         });
     }
 
@@ -135,7 +135,7 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
         name: "EV_SEPARATOR".into(),
         pcr: n_pcr,
         hash: EV_SEPARATOR_HASH.to_vec(),
-        mix: tpmevents::PCR7_SEPARATOR,
+        id: TPMEventID::Pcr7Separator,
     });
 
     // Shim certs
@@ -145,7 +145,7 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
                 name: "EV_EFI_VARIABLE_AUTHORITY".into(),
                 pcr: n_pcr,
                 hash: uefi::UEFIVariableData::new(uefi::GUID_SECURITY_DATABASE, "db", cert).hash(),
-                mix: tpmevents::PCR7_SHIMCERT,
+                id: TPMEventID::Pcr7ShimCert,
             }),
             None => panic!("Can't find shim signature certificate in secure boot db"),
         }
@@ -157,7 +157,7 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
             name: "EV_EFI_VARIABLE_AUTHORITY".into(),
             pcr: n_pcr,
             hash: shim::get_sbat_var_original_uefivar().hash(),
-            mix: tpmevents::PCR7_SBATLEVEL,
+            id: TPMEventID::Pcr7SbatLevel,
         });
     } else if let Some(data) = sbatlevel_raw {
         let sbatlevel = shim::get_sbatlevel_uefivar(&data, &shim::SbatLevelPolicyType::PREVIOUS);
@@ -165,7 +165,7 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
             name: "EV_EFI_VARIABLE_AUTHORITY".into(),
             pcr: n_pcr,
             hash: sbatlevel.hash(),
-            mix: tpmevents::PCR7_SBATLEVEL,
+            id: TPMEventID::Pcr7SbatLevel,
         });
     }
 
@@ -187,7 +187,7 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
                         name: "EV_EFI_VARIABLE_AUTHORITY".into(),
                         pcr: n_pcr,
                         hash,
-                        mix: tpmevents::PCR7_GRUBDBCERT,
+                        id: TPMEventID::Pcr7GrubDbCert,
                     });
                 }
             }
@@ -206,7 +206,7 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
                         name: "EV_EFI_VARIABLE_AUTHORITY".into(),
                         pcr: n_pcr,
                         hash,
-                        mix: tpmevents::PCR7_GRUBVENDORDBCERT,
+                        id: TPMEventID::Pcr7GrubVendorDbCert,
                     });
                 }
             }
@@ -227,7 +227,7 @@ pub fn pcr7_events(efivars_path: &str, esp_path: &str, secureboot_enabled: bool)
                         name: "EV_EFI_VARIABLE_AUTHORITY".into(),
                         pcr: n_pcr,
                         hash,
-                        mix: tpmevents::PCR7_GRUBMOKLISTCERT,
+                        id: TPMEventID::Pcr7GrubMokListCert,
                     });
                 }
             }
@@ -247,19 +247,19 @@ pub fn pcr11_events(uki: &str) -> Vec<TPMEvent> {
         .iter()
         .zip(MODELS_UKI_SECTION_NAME)
         .zip(MODELS_UKI_SECTION_CONTENT)
-        .for_each(|((s, nm), cm)| {
+        .for_each(|((s, nid), cid)| {
             let section = pe.section_by_name(s).unwrap();
             events.push(TPMEvent {
                 name: (*s).into(),
                 pcr: n_pcr,
                 hash: Sha256::digest(format!("{s}\0")).to_vec(),
-                mix: nm,
+                id: nid,
             });
             events.push(TPMEvent {
                 name: format!("{}_CONTENT", *s),
                 pcr: n_pcr,
                 hash: Sha256::digest(section.content()).to_vec(),
-                mix: cm,
+                id: cid,
             });
         });
 
@@ -270,11 +270,11 @@ pub fn pcr14_events(mok_variables: &str) -> Vec<TPMEvent> {
     let n_pcr = 14;
     mok::MokEventHashes::new(mok_variables)
         .zip(MODELS_MOKVARS)
-        .map(|(h, m)| TPMEvent {
+        .map(|(h, id)| TPMEvent {
             name: "EV_IPL".into(),
             pcr: n_pcr,
             hash: h,
-            mix: m,
+            id,
         })
         .collect()
 }
