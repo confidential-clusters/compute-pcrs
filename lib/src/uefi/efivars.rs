@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use super::{GUID_GLOBAL_VARIABLE, GUID_SECURITY_DATABASE, UEFIVariableData};
-use crate::uefi::secureboot;
 use std::fs;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
@@ -39,6 +38,11 @@ impl EFIVarsLoader {
         let data = load_uefi_var_data(&self.path, var, guid, self.attribute_header);
         UEFIVariableData::new(*guid, var, data)
     }
+
+    pub fn secureboot_db(&self) -> Vec<u8> {
+        let (var, guid) = EFI_VAR_ID_DB;
+        load_uefi_var_data(&self.path, var, &guid, self.attribute_header)
+    }
 }
 
 impl Iterator for EFIVarsLoader {
@@ -50,15 +54,6 @@ impl Iterator for EFIVarsLoader {
         Some(self.load_efivar(guid, var))
     }
 }
-
-impl secureboot::SecureBootdbLoader for EFIVarsLoader {
-    fn secureboot_db(&self) -> Vec<u8> {
-        let (var, guid) = EFI_VAR_ID_DB;
-        load_uefi_var_data(&self.path, var, &guid, self.attribute_header)
-    }
-}
-
-impl secureboot::SecureBootVarLoader for EFIVarsLoader {}
 
 pub fn get_secure_boot_targets() -> Vec<(String, Uuid)> {
     SECURE_BOOT_VARIABLES
