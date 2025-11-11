@@ -104,6 +104,8 @@ fn event_subtree(
     let mut divs: Vec<(&TPMEvent, u32, u32)> = vec![];
     let mut nodes: Vec<tree::EventNode<TPMEvent>> = vec![];
 
+    // TODO: need to take into account groups coming from above before pushing
+    //       new divs
     if let Some(event_this) = opt_this
         && let Some(event_that) = opt_that
     {
