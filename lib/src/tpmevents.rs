@@ -17,7 +17,7 @@ pub const TPMEG_MOKVARS: u32 = 1 << 4; // Events depending on MOK variables
 pub const TPMEG_UKI: u32 = 1 << 5; // Events depending on UKI
 pub const TPMEG_ALWAYS: u32 = u32::MAX; // Events that always change
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub enum TPMEventID {
     Pcr4EfiCall,
     Pcr4Separator,
