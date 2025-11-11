@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: MIT
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use strum::FromRepr;
 
 pub mod compute;
+#[cfg(test)]
+mod tests;
 mod tree;
 
 // Event group definitions
@@ -17,7 +20,7 @@ pub const TPMEG_MOKVARS: u32 = 1 << 4; // Events depending on MOK variables
 pub const TPMEG_UKI: u32 = 1 << 5; // Events depending on UKI
 pub const TPMEG_ALWAYS: u32 = u32::MAX; // Events that always change
 
-#[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq, FromRepr, Debug)]
 pub enum TPMEventID {
     PcrRootNodeEvent, // Don't use it except for TPM Event combination
     Pcr4EfiCall,
@@ -90,6 +93,11 @@ impl TPMEventID {
             TPMEventID::Pcr14MokListX => TPMEG_MOKVARS,
             TPMEventID::Pcr14MokListTrusted => TPMEG_MOKVARS,
         }
+    }
+
+    pub fn next(&self) -> Option<Self> {
+        let self_val = self.clone() as usize;
+        Self::from_repr(self_val + 1)
     }
 }
 
