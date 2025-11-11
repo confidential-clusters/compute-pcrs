@@ -19,6 +19,7 @@ pub const TPMEG_ALWAYS: u32 = u32::MAX; // Events that always change
 
 #[derive(Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub enum TPMEventID {
+    PcrRootNodeEvent, // Don't use it except for TPM Event combination
     Pcr4EfiCall,
     Pcr4Separator,
     Pcr4Shim,
@@ -55,6 +56,7 @@ pub enum TPMEventID {
 impl TPMEventID {
     pub fn groups(&self) -> u32 {
         match *self {
+            TPMEventID::PcrRootNodeEvent => TPMEG_NEVER,
             TPMEventID::Pcr4EfiCall => TPMEG_NEVER,
             TPMEventID::Pcr4Separator => TPMEG_NEVER,
             TPMEventID::Pcr4Shim => TPMEG_BOOTLOADER,
