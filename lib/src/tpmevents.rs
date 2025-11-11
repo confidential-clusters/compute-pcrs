@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use strum::FromRepr;
 
+pub mod combine;
 pub mod compute;
 #[cfg(test)]
 mod tests;
