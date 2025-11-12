@@ -20,5 +20,5 @@ hex-literal = "1.1.0"
 sha2 = "0.10.9"
 serde = { version = "1.0.228", features = ["derive"] }
 uuid = "1.18.1"
-openssl = "0.10.74"
+openssl = "0.10.75"
 glob = "0.3.3"
